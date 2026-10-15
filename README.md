@@ -2,7 +2,22 @@
 
 Three connected AI systems built around one shared Knowledge Brain API: Task 1 Knowledge Brain, Task 2 Inbox Agent, Task 3 Meeting to Scope. The full work plan is in [TODO.md](TODO.md).
 
-**Built so far:** the shared Claude gateway (`shared/llm_gateway`) and the token & cost dashboard (`dashboard/app.py`). Tasks 1–3 are folders only.
+**Built so far:** the shared LLM gateway (`shared/llm_gateway`), the token & cost dashboard (`dashboard/app.py`) and the core of **Task 1** (crawl → parse → spaCy chunks → local embeddings → hybrid search → `/query` API). **Tasks 2 and 3 are not built yet.**
+
+## Run each task
+| Task | Status | How to run (VS Code: F5 and pick the entry) |
+|---|---|---|
+| Task 1 – Knowledge Brain | Core works | 1. **Task 1: Ingest 20 articles** (first time only) → 2. **Task 1: Knowledge Brain API** → open http://localhost:8100/docs and try `POST /query` |
+| Task 2 – Inbox Agent | Not built | — |
+| Task 3 – Meeting to Scope | Not built | — |
+
+Terminal equivalent for Task 1 (from `task1-knowledge-brain/`):
+```
+python run_ingest.py --limit 20
+python -m uvicorn app.main:app --port 8100
+python -m unittest discover -s tests -t . -v
+```
+In offline mode (default, $0) answers are **extractive**: the best matching sentences from the help center, quoted with sources. Questions the help center does not cover return `status: insufficient_evidence` and `needs_human: true`.
 
 ## Cost: $0 by default
 - `LLM_MODE=offline` is the default: answers come from `data/replay.jsonl` (recorded earlier) or a clearly marked placeholder. No network, no cost. All tests run this way.

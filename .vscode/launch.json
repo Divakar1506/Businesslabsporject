@@ -24,6 +24,44 @@
       "preLaunchTask": "Seed demo usage data"
     },
     {
+      "name": "Task 1: Knowledge Brain API (http://localhost:8100/docs)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--port", "8100"],
+      "cwd": "${workspaceFolder}/task1-knowledge-brain",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {"PYTHONUTF8": "1"}
+    },
+    {
+      "name": "Task 1: Ingest 20 articles (polite, ~1 min)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "run_ingest.py",
+      "args": ["--limit", "20"],
+      "cwd": "${workspaceFolder}/task1-knowledge-brain",
+      "env": {"PYTHONUTF8": "1"},
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Task 1: Ingest ALL articles (polite, ~40 min)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "run_ingest.py",
+      "cwd": "${workspaceFolder}/task1-knowledge-brain",
+      "env": {"PYTHONUTF8": "1"},
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Task 1: Tests (offline, free)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "unittest",
+      "args": ["discover", "-s", "tests", "-t", ".", "-v"],
+      "cwd": "${workspaceFolder}/task1-knowledge-brain",
+      "env": {"PYTHONUTF8": "1", "LLM_MODE": "offline"}
+    },
+    {
       "name": "Tests: all (offline, free)",
       "type": "debugpy",
       "request": "launch",

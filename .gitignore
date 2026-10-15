@@ -7,3 +7,5 @@ data/*.db
 data/*.db-*
 data/*.jsonl
 !data/.gitkeep
+**/data/*.db
+**/data/*.db-*
