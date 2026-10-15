@@ -7,7 +7,7 @@ Three connected AI systems built around one shared Knowledge Brain API: Task 1 K
 ## Run each task
 | Task | Status | How to run (VS Code: F5 and pick the entry) |
 |---|---|---|
-| Task 1 – Knowledge Brain | Core works | 1. **Task 1: Ingest 20 articles** (first time only) → 2. **Task 1: Knowledge Brain API** → open http://localhost:8100/docs and try `POST /query` |
+| Task 1 – Knowledge Brain | Works (31/32 evals) | 1. **Task 1: Ingest 20 articles** (first time only) → 2. **Task 1: API + Chat screen (start both)** → chat at http://localhost:8501, API docs at http://localhost:8100/docs |
 | Task 2 – Inbox Agent | Not built | — |
 | Task 3 – Meeting to Scope | Not built | — |
 
@@ -16,7 +16,10 @@ Terminal equivalent for Task 1 (from `task1-knowledge-brain/`):
 python run_ingest.py --limit 20
 python -m uvicorn app.main:app --port 8100
 python -m unittest discover -s tests -t . -v
+python -m streamlit run ui/chat.py          # chat + expert queue (API must be running)
+python evaluation/run_eval.py               # 32 eval cases, $0
 ```
+Questions the brain can't answer go to the **Expert queue** tab. An expert answer marked *general* is added to memory straight away; one marked *customer* is kept on record only. Guardrails (shared by all tasks, `shared/guardrails.py`): prompt-injection detection, PII redaction, citation and link checks.
 In offline mode (default, $0) answers are **extractive**: the best matching sentences from the help center, quoted with sources. Questions the help center does not cover return `status: insufficient_evidence` and `needs_human: true`.
 
 ## Cost: $0 by default

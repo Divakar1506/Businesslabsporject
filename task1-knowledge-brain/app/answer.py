@@ -16,12 +16,16 @@ from ingestion.store import KBStore
 from retrieval import embedder
 from retrieval.chunker import sentences
 from retrieval.index import HybridIndex, terms
+from shared import guardrails
 from shared.llm_gateway import BudgetExceeded, Gateway
+
+from .escalations import Escalations
 
 PROMPT_VERSION = "kb-answer-v1"
 SYSTEM_PROMPT = (Path(__file__).parent / "prompts" / "answer_v1.md").read_text(encoding="utf-8")
 NO_ANSWER = ("I could not find this in the help center. I have flagged it for a human expert "
              "so you get a correct answer instead of a guess.")
+ALLOWED_LINK_DOMAINS = {"support.brilliantdirectories.com", "brilliantdirectories.com", "s3.amazonaws.com"}
 
 
 class Brain:
@@ -29,6 +33,7 @@ class Brain:
         self.store = store
         self.gateway = gateway or Gateway()
         self.embedder = embedder.get(embed_model or settings.EMBED_MODEL)
+        self.escalations = Escalations(store)
         self._index: HybridIndex | None = None
         self._lock = threading.Lock()
 
@@ -45,27 +50,51 @@ class Brain:
             self._index = None
 
     # ------------------------------------------------------------------
-    def query(self, question: str, top_k: int = 5, context: str | None = None) -> dict:
+    def query(self, question: str, top_k: int = 5, context: str | None = None, escalate: bool = True,
+              min_score: float | None = None) -> dict:
         t0 = time.perf_counter()
         rid = uuid.uuid4().hex[:16]
-        hits = self.index.search(question, self.embedder.encode_query(question), k=top_k)
+        flags = [f"question looks like a prompt injection: {s!r}" for s in guardrails.injection_signals(question)]
+        raw = self.index.search(question, self.embedder.encode_query(question), k=top_k)
+        # Retrieved text is data. A chunk that tries to give instructions is dropped from the evidence.
+        hits = []
+        for h in raw:
+            sig = guardrails.injection_signals(h["text"])
+            if sig:
+                flags.append(f"dropped evidence from {h['url']}: contains {sig[0]!r}")
+            else:
+                hits.append(h)
         best = max((h["vector_score"] for h in hits), default=0.0)
-        base = {"request_id": rid, "retrieval_score": round(best, 4)}
-        if not hits or best < settings.MIN_SCORE:
-            return {**base, "answer": NO_ANSWER, "status": "insufficient_evidence", "needs_human": True,
-                    "sources": [], "images": [], "answer_mode": "none", "model": None,
-                    "latency_ms": round((time.perf_counter() - t0) * 1000, 1)}
+        threshold = settings.MIN_SCORE if min_score is None else min_score
+
+        def finish(**kw):
+            return {"request_id": rid, "retrieval_score": round(best, 4), "flags": flags, "escalation_id": None,
+                    "latency_ms": round((time.perf_counter() - t0) * 1000, 1), **kw}
+
+        def abstain(reason: str, mode: str, model=None):
+            esc = None
+            if escalate:
+                esc = self.escalations.create(question, reason, [{"title": h["title"], "url": h["url"],
+                                                                  "score": h["vector_score"]} for h in raw[:3]])
+            return finish(answer=NO_ANSWER, status="insufficient_evidence", needs_human=True, sources=[], images=[],
+                          answer_mode=mode, model=model, escalation_id=esc["id"] if esc else None)
+
+        if not hits or best < threshold:
+            return abstain(f"best evidence score {best:.3f} below {threshold}", "none")
 
         answer, mode, model = self._llm_answer(question, hits, context, rid)
         if answer == "INSUFFICIENT_EVIDENCE":
-            return {**base, "answer": NO_ANSWER, "status": "insufficient_evidence", "needs_human": True,
-                    "sources": [], "images": [], "answer_mode": "llm", "model": model,
-                    "latency_ms": round((time.perf_counter() - t0) * 1000, 1)}
+            return abstain("model judged the evidence insufficient", "llm", model)
+        if answer is not None:
+            problems = (guardrails.check_citations(answer, len(hits)).issues
+                        + guardrails.check_links(answer, ALLOWED_LINK_DOMAINS).issues)
+            if problems:  # an unverifiable model answer is replaced by quoted evidence
+                flags.extend(f"model answer rejected: {p}" for p in problems)
+                answer = None
         if answer is None:
             answer, mode = self._extractive_answer(question, hits), "extractive"
-        return {**base, "answer": answer, "status": "answered", "needs_human": False,
-                "sources": _sources(hits), "images": _images(hits), "answer_mode": mode, "model": model,
-                "latency_ms": round((time.perf_counter() - t0) * 1000, 1)}
+        return finish(answer=answer, status="answered", needs_human=False, sources=_sources(hits),
+                      images=_images(hits), answer_mode=mode, model=model)
 
     def _llm_answer(self, question, hits, context, rid):
         evidence = "\n\n".join(f"[{i}] {h['title']} — {h['heading'] or 'Intro'}\n{h['text']}"
@@ -114,7 +143,8 @@ def _sources(hits: list[dict]) -> list[dict]:
         cur = best.get(h["article_id"])
         if cur is None or h["vector_score"] > cur["score"]:
             best[h["article_id"]] = {"title": h["title"], "url": h["url"], "section": h["heading"] or "",
-                                     "score": h["vector_score"]}
+                                     "score": h["vector_score"],
+                                     "kind": "expert" if h["article_id"].startswith("expert-") else "article"}
     return sorted(best.values(), key=lambda s: -s["score"])
 
 

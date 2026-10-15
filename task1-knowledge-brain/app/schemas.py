@@ -15,6 +15,7 @@ class Source(BaseModel):
     url: str
     section: str = Field(description="Heading of the section the evidence came from ('' = intro)")
     score: float = Field(description="Cosine similarity of the best chunk from this article, 0-1")
+    kind: Literal["article", "expert"] = Field("article", description="expert = an approved human expert answer")
 
 
 class ImageRef(BaseModel):
@@ -35,6 +36,38 @@ class QueryResponse(BaseModel):
     model: str | None = None
     request_id: str
     latency_ms: float
+    flags: list[str] = Field(default_factory=list, description="Guardrail findings (injection attempts, rejected output)")
+    escalation_id: int | None = Field(None, description="Set when the question was sent to a human expert")
+
+
+class EscalationCreate(BaseModel):
+    question: str = Field(min_length=3, max_length=2000)
+    reason: str = Field("raised manually", max_length=500)
+    source: Literal["manual", "inbox", "scope", "query"] = "manual"
+
+
+class EscalationResolve(BaseModel):
+    answer: str = Field(min_length=3, max_length=8000)
+    expert: str = Field(min_length=1, max_length=100)
+    scope: Literal["general", "customer"] = Field(
+        "general", description="general = add to memory for everyone; customer = keep on record only")
+    expires_at: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$", description="YYYY-MM-DD; omit = no expiry")
+
+
+class Escalation(BaseModel):
+    id: int
+    created_at: float
+    question: str
+    reason: str
+    evidence: list[dict]
+    source: str
+    status: str
+    expert: str | None = None
+    answer: str | None = None
+    scope: str | None = None
+    expires_at: str | None = None
+    resolved_at: float | None = None
+    article_id: str | None = None
 
 
 class IngestionRunRequest(BaseModel):

@@ -29,7 +29,9 @@ CHUNK_OVERLAP_SENTENCES = _env("KB_CHUNK_OVERLAP_SENTENCES", 1)
 # Retrieval.
 EMBED_MODEL = _env("KB_EMBED_MODEL", "BAAI/bge-small-en-v1.5")
 TOP_K = _env("KB_TOP_K", 5)
-# Below this cosine score for the best chunk, the brain says it does not know. First guess from 6 test questions (good 0.76-0.88, off-topic 0.56-0.57); calibrate with the eval set..
-MIN_SCORE = _env("KB_MIN_SCORE", 0.65)
+# Below this cosine score for the best chunk, the brain says it does not know.
+# Calibrated by evaluation/run_eval.py on 2026-10-15 (208 articles): best dev plateau 0.66-0.69, middle = 0.68,
+# held-out test accuracy 16/16. Re-run the eval after the full crawl; more articles shift the scores.
+MIN_SCORE = _env("KB_MIN_SCORE", 0.68)
 
 API_TOKEN = os.environ.get("KB_API_TOKEN", "")  # empty = no auth (local development)

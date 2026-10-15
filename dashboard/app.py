@@ -92,7 +92,7 @@ task = c2.selectbox("Task", ["All"] + tasks)
 models = ["All"] + sorted(pricing.PRICES)
 model = c3.selectbox("Model", models)
 c4.write("")
-if c4.button("Refresh", use_container_width=True):
+if c4.button("Refresh", width="stretch"):
     st.rerun()
 task_f = None if task == "All" else task
 model_f = None if model == "All" else model
@@ -157,7 +157,7 @@ with tab_tokens:
             order=alt.Order("order:Q"),
             tooltip=["bucket:N", "kind:N", alt.Tooltip("tokens:Q", format=",")],
         ).properties(height=300)
-        st.altair_chart(bar_style(chart), use_container_width=True)
+        st.altair_chart(bar_style(chart), width="stretch")
 
     st.subheader("Tokens by task over time")
     tt = pd.DataFrame(store.timeseries(since, bucket, "task", model=model_f))
@@ -174,7 +174,7 @@ with tab_tokens:
             tooltip=["bucket:N", alt.Tooltip("grp:N", title="task"), alt.Tooltip("tokens:Q", format=","),
                      alt.Tooltip("cost_usd:Q", format="$.4f"), "calls:Q"],
         ).properties(height=260)
-        st.altair_chart(bar_style(chart), use_container_width=True)
+        st.altair_chart(bar_style(chart), width="stretch")
 
     st.subheader("Biggest token consumers")
     by = st.radio("Group by", ["endpoint", "prompt_version", "model", "task"], horizontal=True, key="tok_by")
@@ -188,14 +188,14 @@ with tab_tokens:
             tooltip=[alt.Tooltip("name:N", title=by), alt.Tooltip("avg_tokens:Q", format=",.0f"),
                      alt.Tooltip("tokens:Q", format=","), "calls:Q"],
         ).properties(height=min(40 * len(bd) + 20, 420))
-        st.altair_chart(bar_style(chart), use_container_width=True)
+        st.altair_chart(bar_style(chart), width="stretch")
         est = bd[["name", "input_tokens", "est_input_tokens"]].copy()
         est["actual_prompt"] = bd["input_tokens"] + bd["cache_read_tokens"]
         est["estimate_ratio"] = (est["est_input_tokens"] / est["actual_prompt"].where(est["actual_prompt"] > 0)).round(2)
         with st.expander("spaCy estimate vs. actual prompt tokens (calibration)"):
             st.caption("Ratio near 1.0 means the free spaCy estimate is accurate; adjust SUBWORD_RATIO in tokens.py if not.")
             st.dataframe(est[["name", "est_input_tokens", "actual_prompt", "estimate_ratio"]], hide_index=True,
-                         use_container_width=True)
+                         width="stretch")
     st.caption(f"Highest context-window use in range: {tot['max_context_pct']}% "
                + ("— above 70%, consider trimming context." if tot["max_context_pct"] > 70 else ""))
 
@@ -231,7 +231,7 @@ with tab_cost:
                             legend=alt.Legend(orient="top")),
             tooltip=["bucket:N", alt.Tooltip("grp:N", title="task"), alt.Tooltip("cost_usd:Q", format="$.4f")],
         ).properties(height=280)
-        st.altair_chart(bar_style(chart), use_container_width=True)
+        st.altair_chart(bar_style(chart), width="stretch")
     else:
         st.info("No calls in this range yet.")
 
@@ -248,7 +248,7 @@ with tab_cost:
             tooltip=[alt.Tooltip("name:N", title=by), alt.Tooltip("cost_usd:Q", format="$.4f"), "calls:Q",
                      alt.Tooltip("avg_latency_ms:Q", format=",.0f", title="avg latency ms")],
         ).properties(height=min(40 * len(bd.head(10)) + 20, 380))
-        col.altair_chart(bar_style(chart), use_container_width=True)
+        col.altair_chart(bar_style(chart), width="stretch")
 
     with st.expander("Price table (USD per million tokens)"):
         st.dataframe(pd.DataFrame(pricing.PRICES).T.reset_index(names="model"), hide_index=True)
@@ -342,7 +342,7 @@ with tab_calls:
         show = ["time", "task", "endpoint", "model", "status", "input_tokens", "cache_read_tokens",
                 "cache_write_tokens", "output_tokens", "cost_usd", "latency_ms", "prompt_version", "note"]
         status = st.multiselect("Status", ["ok", "error", "blocked"], default=["ok", "error", "blocked"])
-        st.dataframe(rows[rows["status"].isin(status)][show], hide_index=True, use_container_width=True,
+        st.dataframe(rows[rows["status"].isin(status)][show], hide_index=True, width="stretch",
                      column_config={"cost_usd": st.column_config.NumberColumn(format="$%.5f"),
                                     "latency_ms": st.column_config.NumberColumn(format="%.0f")})
         st.caption("Only metadata is stored — prompts and replies are never written to the usage log.")

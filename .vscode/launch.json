@@ -1,6 +1,14 @@
 {
   // Press F5 in VS Code and pick one of these. Open the "ai-tech-consultant" folder itself (File > Open Folder).
   "version": "0.2.0",
+  "compounds": [
+    {
+      "name": "Task 1: API + Chat screen (start both)",
+      "configurations": ["Task 1: Knowledge Brain API (http://localhost:8100/docs)",
+                         "Task 1: Chat & expert screen (needs the API running)"],
+      "stopAll": true
+    }
+  ],
   "configurations": [
     {
       "name": "Dashboard: token & cost (real usage)",
@@ -32,6 +40,25 @@
       "cwd": "${workspaceFolder}/task1-knowledge-brain",
       "envFile": "${workspaceFolder}/.env",
       "env": {"PYTHONUTF8": "1"}
+    },
+    {
+      "name": "Task 1: Chat & expert screen (needs the API running)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "ui/chat.py", "--server.port", "8501", "--browser.gatherUsageStats", "false"],
+      "cwd": "${workspaceFolder}/task1-knowledge-brain",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {"PYTHONUTF8": "1", "KB_API_URL": "http://localhost:8100"}
+    },
+    {
+      "name": "Task 1: Run evals (offline, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "evaluation/run_eval.py",
+      "cwd": "${workspaceFolder}/task1-knowledge-brain",
+      "env": {"PYTHONUTF8": "1", "LLM_MODE": "offline"},
+      "console": "integratedTerminal"
     },
     {
       "name": "Task 1: Ingest 20 articles (polite, ~1 min)",

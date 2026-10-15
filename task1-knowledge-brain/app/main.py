@@ -14,7 +14,9 @@ from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException  # 
 
 import settings  # noqa: E402
 from app.answer import Brain  # noqa: E402
-from app.schemas import ErrorResponse, IngestionRunRequest, QueryRequest, QueryResponse  # noqa: E402
+from app.schemas import (Escalation, EscalationCreate, EscalationResolve, ErrorResponse,  # noqa: E402
+                         IngestionRunRequest, QueryRequest, QueryResponse)
+from shared import guardrails  # noqa: E402
 from ingestion import pipeline  # noqa: E402
 from ingestion.store import KBStore  # noqa: E402
 
@@ -48,13 +50,42 @@ def health():
 @app.post("/query", response_model=QueryResponse, responses={401: {"model": ErrorResponse}},
           dependencies=[Depends(auth)])
 async def query(req: QueryRequest) -> QueryResponse:
-    """Retrieve evidence and answer. `status=insufficient_evidence` means: do not guess, ask a human."""
+    """Retrieve evidence and answer. `status=insufficient_evidence` means: do not guess, ask a human.
+    Such questions are queued automatically as escalations (see `escalation_id`)."""
+    check = guardrails.check_input(req.question + (req.context or ""))
+    if not check.ok:
+        raise HTTPException(422, "; ".join(check.issues))
     try:
         result = await asyncio.wait_for(
             asyncio.to_thread(brain().query, req.question, req.top_k, req.context), timeout=60)
     except asyncio.TimeoutError:
         raise HTTPException(504, "answering took longer than 60 s")
     return QueryResponse(**result)
+
+
+@app.post("/escalations", response_model=Escalation, status_code=201, dependencies=[Depends(auth)])
+def create_escalation(req: EscalationCreate):
+    """Ask a human expert directly (e.g. the Inbox Agent or Meeting-to-Scope found a gap)."""
+    return brain().escalations.create(req.question, req.reason, [], req.source)
+
+
+@app.get("/escalations", response_model=list[Escalation], dependencies=[Depends(auth)])
+def list_escalations(status: str | None = None, limit: int = 100):
+    return brain().escalations.list(status, min(limit, 500))
+
+
+@app.post("/escalations/{eid}/resolve", response_model=Escalation, dependencies=[Depends(auth)],
+          responses={404: {"model": ErrorResponse}, 409: {"model": ErrorResponse}})
+def resolve_escalation(eid: int, req: EscalationResolve):
+    """Record the expert's answer. scope=general adds it to memory (searchable at once); customer keeps it on record."""
+    try:
+        esc = brain().escalations.resolve(eid, req.answer, req.expert, req.scope, req.expires_at)
+    except KeyError:
+        raise HTTPException(404, f"escalation {eid} not found")
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    brain().reload()
+    return esc
 
 
 @app.get("/ingestion/status", dependencies=[Depends(auth)])
@@ -71,6 +102,7 @@ async def ingestion_run(req: IngestionRunRequest, background: BackgroundTasks):
     async def job():
         async with _ingest_lock:
             await pipeline.run(store, req.limit)
+            brain().escalations.expire()
             brain().reload()
 
     background.add_task(job)
