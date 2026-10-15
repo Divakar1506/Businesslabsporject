@@ -1,0 +1,36 @@
+{
+  // Press F5 in VS Code and pick one of these. Open the "ai-tech-consultant" folder itself (File > Open Folder).
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Dashboard: token & cost (real usage)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "dashboard/app.py", "--server.port", "8600", "--server.headless", "false", "--browser.gatherUsageStats", "false"],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {"PYTHONUTF8": "1"},
+      "justMyCode": true
+    },
+    {
+      "name": "Dashboard: demo data",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "dashboard/app.py", "--server.port", "8601", "--server.headless", "false", "--browser.gatherUsageStats", "false", "--", "--db", "data/demo_usage.db"],
+      "cwd": "${workspaceFolder}",
+      "env": {"PYTHONUTF8": "1"},
+      "preLaunchTask": "Seed demo usage data"
+    },
+    {
+      "name": "Tests: all (offline, free)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "unittest",
+      "args": ["discover", "-s", "tests", "-t", ".", "-v"],
+      "cwd": "${workspaceFolder}",
+      "env": {"PYTHONUTF8": "1"}
+    }
+  ]
+}

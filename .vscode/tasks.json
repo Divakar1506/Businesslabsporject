@@ -1,0 +1,26 @@
+{
+  // Terminal > Run Task... (or Ctrl+Shift+B for the default build task = tests)
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run tests",
+      "type": "shell",
+      "command": "python -X utf8 -m unittest discover -s tests -t . -v",
+      "group": {"kind": "build", "isDefault": true},
+      "problemMatcher": []
+    },
+    {
+      "label": "Seed demo usage data",
+      "type": "shell",
+      "command": "python -X utf8 scripts/seed_demo_usage.py",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dashboard (real usage)",
+      "type": "shell",
+      "command": "python -X utf8 -m streamlit run dashboard/app.py --server.port 8600",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

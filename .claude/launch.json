@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cost-dashboard-demo",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-X", "utf8", "-m", "streamlit", "run", "dashboard/app.py", "--server.port", "8601", "--server.address", "localhost", "--server.headless", "true", "--browser.gatherUsageStats", "false", "--", "--db", "data/demo_usage.db"],
+      "port": 8601
+    }
+  ]
+}
