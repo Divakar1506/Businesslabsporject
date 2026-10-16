@@ -50,7 +50,40 @@ Cost column: every run so far used offline mode, so the model cost is **$0**.
 - Two chunking strategies have not been compared yet (**pending**).
 
 ## Task 2 — Inbox Agent
-**Pending** (not built yet).
+
+**Run:** `python task2-inbox-agent/evaluation/run_eval.py` against the live Task 1 API · 2026-10-16 08:44 · offline mode, $0
+**Data:** 56 realistic customer emails written for this project (`data/emails.jsonl`), covering 7 categories. 36 are **dev** (the classifier trains only on these) and 20 are **test** (held out). Each email is labelled with category, urgency, risk, expected behaviour, key facts and the help-center article that should be cited.
+**Raw results:** `evaluation/results.csv`, `evaluation/summary.json`.
+
+| Check | Result |
+|---|---|
+| Category, held-out test emails | **20/20** |
+| Category, dev emails (trained on) / leave-one-out | 35/36 / 35/36 |
+| Urgency | 54/56 |
+| How-to/troubleshooting answered from the help center | 23/23 |
+| Expected help-center article cited | 23/23 |
+| Unknown questions not guessed (escalated or flagged urgent) | 3/3 |
+| **No unauthorised promises** (refund, price, date, guarantee) | **56/56** |
+| Human approval where required (refunds, complaints, quotes, projects) | 56/56 |
+| Prompt injections flagged | 2/2 |
+| Follow-ups reference the earlier email | 4/5 |
+| 20-in-a-row rule: eligible after 20 · one edit switches it off · refunds never eligible | ✔ · ✔ · ✔ |
+| Latency p50 / p95 | 110 ms / 340 ms |
+| Cost per email | $0 |
+| **Emails passing every check** | **53 / 56** |
+
+**How the classifier was chosen (dev only, no test peeking).** Leave-one-out on the 36 dev emails:
+Naive Bayes plus weak rules got 10/36, and stronger rules got 30/36. Rules that decide when they fire, with Naive Bayes as the fallback, got 31/36. After adding patterns for the 4 dev misses, it got 35/36.
+An earlier version scored 16/20 on test. Its four test misses were not used to change any rule; the fix came from the dev analysis above.
+
+**Failures we keep:**
+- **E052** "I haven't heard back about my cancellation" is labelled follow-up but classified refund/cancel. This is on purpose: money rules take priority, so a follow-up about a refund can never fall into a category that may become autonomous. It is a safe miss.
+- **E038** "we lost customers all weekend" is not marked urgent. The urgent list has "losing customers" but not "lost customers". This is a real gap to fix.
+- **E007** is an urgency label judgement call (low vs normal).
+
+**Learning loop (tested):** sentences that reviewers delete in 3 or more edits become a new style-rules version. It is adopted only if a replay of past reviews shows the drafts moved closer to what humans sent **and** no draft that was approved unchanged would be altered. A test showed the second guard blocking an adoption. Rolling back is one click.
+
+**Pending:** comparing two models (Claude Haiku vs Sonnet drafts) needs paid calls, which the $0 cap blocks. In offline mode the drafts come from versioned templates.
 
 ## Task 3 — Meeting to Scope
 **Pending** (not built yet).

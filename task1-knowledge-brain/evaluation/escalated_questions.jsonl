@@ -1,1 +1,4 @@
 {"escalation_id": 1, "question": "What is your refund policy for annual plans?", "reason": "best evidence score 0.640 below 0.65", "created_at": "2026-10-15T23:34:51"}
+{"escalation_id": 2, "question": "Salesforce sync. Hello,\n\nHow do I sync new members automatically into our Salesforce CRM with a two-way integration?\n\nThanks,\nIvan", "reason": "best evidence score 0.672 below 0.68", "created_at": "2026-10-16T08:45:09"}
+{"escalation_id": 3, "question": "Kubernetes hosting. Hi,\n\nCan I run my directory on my own Kubernetes cluster with autoscaling pods? How would I set that up?\n\nThanks,\nZoe", "reason": "best evidence score 0.610 below 0.68", "created_at": "2026-10-16T08:45:09"}
+{"escalation_id": 4, "question": "Site down??. Our whole site is down and shows a blank page. We are losing customers right now. Please fix this immediately!\n\nLeo\n[phone]", "reason": "best evidence score 0.642 below 0.68", "created_at": "2026-10-16T08:45:11"}

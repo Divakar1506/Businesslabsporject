@@ -2,13 +2,13 @@
 
 Three connected AI systems built around one shared Knowledge Brain API: Task 1 Knowledge Brain, Task 2 Inbox Agent, Task 3 Meeting to Scope. The full work plan is in [TODO.md](TODO.md).
 
-**Built so far:** the shared LLM gateway (`shared/llm_gateway`), the token & cost dashboard (`dashboard/app.py`) and the core of **Task 1** (crawl → parse → spaCy chunks → local embeddings → hybrid search → `/query` API). **Tasks 2 and 3 are not built yet.**
+**Built so far:** the shared LLM gateway (`shared/llm_gateway`), shared guardrails, the token & cost dashboard (`dashboard/app.py`), **Task 1** Knowledge Brain (crawl → parse → spaCy chunks → local embeddings → hybrid search → `/query` API, expert queue, chat screen) and **Task 2** Inbox Agent (Python; calls Task 1 only through its API). **Task 3 is not built yet.**
 
 ## Run each task
 | Task | Status | How to run (VS Code: F5 and pick the entry) |
 |---|---|---|
 | Task 1 – Knowledge Brain | Works (31/32 evals) | 1. **Task 1: Ingest 20 articles** (first time only) → 2. **Task 1: API + Chat screen (start both)** → chat at http://localhost:8501, API docs at http://localhost:8100/docs |
-| Task 2 – Inbox Agent | Not built | — |
+| Task 2 – Inbox Agent | Works (53/56 evals) | **Task 2: Inbox (Knowledge Brain API + review screen)** → http://localhost:8502 → sidebar: *Load the 56 sample emails* → review, edit, send |
 | Task 3 – Meeting to Scope | Not built | — |
 
 Terminal equivalent for Task 1 (from `task1-knowledge-brain/`):

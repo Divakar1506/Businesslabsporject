@@ -57,7 +57,8 @@ async def query(req: QueryRequest) -> QueryResponse:
         raise HTTPException(422, "; ".join(check.issues))
     try:
         result = await asyncio.wait_for(
-            asyncio.to_thread(brain().query, req.question, req.top_k, req.context), timeout=60)
+            asyncio.to_thread(brain().query, req.question, req.top_k, req.context, req.escalate,
+                              None, req.source), timeout=60)
     except asyncio.TimeoutError:
         raise HTTPException(504, "answering took longer than 60 s")
     return QueryResponse(**result)

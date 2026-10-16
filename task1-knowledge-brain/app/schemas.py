@@ -8,6 +8,8 @@ class QueryRequest(BaseModel):
     question: str = Field(min_length=3, max_length=2000, description="The customer's or agent's question")
     top_k: int = Field(5, ge=1, le=20, description="How many evidence chunks to retrieve")
     context: str | None = Field(None, max_length=4000, description="Optional extra context, e.g. the email body")
+    source: Literal["query", "inbox", "scope"] = Field("query", description="Which app is asking (tags escalations)")
+    escalate: bool = Field(True, description="Queue unanswerable questions for a human expert")
 
 
 class Source(BaseModel):

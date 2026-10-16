@@ -51,7 +51,7 @@ class Brain:
 
     # ------------------------------------------------------------------
     def query(self, question: str, top_k: int = 5, context: str | None = None, escalate: bool = True,
-              min_score: float | None = None) -> dict:
+              min_score: float | None = None, source: str = "query") -> dict:
         t0 = time.perf_counter()
         rid = uuid.uuid4().hex[:16]
         flags = [f"question looks like a prompt injection: {s!r}" for s in guardrails.injection_signals(question)]
@@ -75,7 +75,8 @@ class Brain:
             esc = None
             if escalate:
                 esc = self.escalations.create(question, reason, [{"title": h["title"], "url": h["url"],
-                                                                  "score": h["vector_score"]} for h in raw[:3]])
+                                                                  "score": h["vector_score"]} for h in raw[:3]],
+                                              source)
             return finish(answer=NO_ANSWER, status="insufficient_evidence", needs_human=True, sources=[], images=[],
                           answer_mode=mode, model=model, escalation_id=esc["id"] if esc else None)
 

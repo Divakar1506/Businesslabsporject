@@ -7,6 +7,12 @@
       "configurations": ["Task 1: Knowledge Brain API (http://localhost:8100/docs)",
                          "Task 1: Chat & expert screen (needs the API running)"],
       "stopAll": true
+    },
+    {
+      "name": "Task 2: Inbox (Knowledge Brain API + review screen)",
+      "configurations": ["Task 1: Knowledge Brain API (http://localhost:8100/docs)",
+                         "Task 2: Inbox review screen (needs the API running)"],
+      "stopAll": true
     }
   ],
   "configurations": [
@@ -86,6 +92,34 @@
       "module": "unittest",
       "args": ["discover", "-s", "tests", "-t", ".", "-v"],
       "cwd": "${workspaceFolder}/task1-knowledge-brain",
+      "env": {"PYTHONUTF8": "1", "LLM_MODE": "offline"}
+    },
+    {
+      "name": "Task 2: Inbox review screen (needs the API running)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "ui/review.py", "--server.port", "8502", "--browser.gatherUsageStats", "false"],
+      "cwd": "${workspaceFolder}/task2-inbox-agent",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {"PYTHONUTF8": "1", "KB_API_URL": "http://localhost:8100"}
+    },
+    {
+      "name": "Task 2: Run evals (needs the API running, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "evaluation/run_eval.py",
+      "cwd": "${workspaceFolder}/task2-inbox-agent",
+      "env": {"PYTHONUTF8": "1", "LLM_MODE": "offline", "KB_API_URL": "http://localhost:8100"},
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Task 2: Tests (offline, free)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "unittest",
+      "args": ["discover", "-s", "tests", "-t", ".", "-v"],
+      "cwd": "${workspaceFolder}/task2-inbox-agent",
       "env": {"PYTHONUTF8": "1", "LLM_MODE": "offline"}
     },
     {
