@@ -1,59 +1,31 @@
 # AI Tech Consultant (Business Labs Projects)
 
-Three connected AI systems built around one shared Knowledge Brain API: Task 1 Knowledge Brain, Task 2 Inbox Agent, Task 3 Meeting to Scope. The full work plan is in [TODO.md](TODO.md).
-
-**Built so far:** the shared LLM gateway (`shared/llm_gateway`), shared guardrails, the token & cost dashboard (`dashboard/app.py`), **Task 1** Knowledge Brain (crawl → parse → spaCy chunks → local embeddings → hybrid search → `/query` API, expert queue, chat screen) and **Task 2** Inbox Agent (Python; calls Task 1 only through its API). **Task 3 is not built yet.**
-
-## Run each task
-| Task | Status | How to run (VS Code: F5 and pick the entry) |
-|---|---|---|
-| Task 1 – Knowledge Brain | Works (31/32 evals) | 1. **Task 1: Ingest 20 articles** (first time only) → 2. **Task 1: API + Chat screen (start both)** → chat at http://localhost:8501, API docs at http://localhost:8100/docs |
-| Task 2 – Inbox Agent | Works (53/56 evals) | **Task 2: Inbox (Knowledge Brain API + review screen)** → http://localhost:8502 → sidebar: *Load the 56 sample emails* → review, edit, send |
-| Task 3 – Meeting to Scope | Not built | — |
-
-Terminal equivalent for Task 1 (from `task1-knowledge-brain/`):
-```
-python run_ingest.py --limit 20
-python -m uvicorn app.main:app --port 8100
-python -m unittest discover -s tests -t . -v
-python -m streamlit run ui/chat.py          # chat + expert queue (API must be running)
-python evaluation/run_eval.py               # 32 eval cases, $0
-```
-Questions the brain can't answer go to the **Expert queue** tab. An expert answer marked *general* is added to memory straight away; one marked *customer* is kept on record only. Guardrails (shared by all tasks, `shared/guardrails.py`): prompt-injection detection, PII redaction, citation and link checks.
-In offline mode (default, $0) answers are **extractive**: the best matching sentences from the help center, quoted with sources. Questions the help center does not cover return `status: insufficient_evidence` and `needs_human: true`.
-
-## Cost: $0 by default
-- `LLM_MODE=offline` is the default: answers come from `data/replay.jsonl` (recorded earlier) or a clearly marked placeholder. No network, no cost. All tests run this way.
-- `LLM_MODE=ollama` uses a local model through Ollama, also $0.
-- Paid Claude calls need `LLM_MODE=claude` **and** `HARD_MONTHLY_CAP_USD` above 0. It is **0 by default**, so every paid call is blocked before it reaches the API.
-- Limitation: the brief asks for Claude at the center with measured model comparisons. At $0 those Claude numbers cannot be produced; EVALS.md must say so.
+One shared **Knowledge Brain** (Task 1) that answers product questions from the Brilliant Directories help center with sources, used **only through its API** by an **Inbox Agent** (Task 2) that drafts customer replies, and by **Meeting to Scope** (Task 3) that turns client meetings into a scope, estimate and proposal. Everything runs **offline at $0** by default. Plan: [TODO.md](TODO.md) · Results: [EVALS.md](EVALS.md) · Overview: [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)
 
 ## Prerequisites
-- Python 3.11+ (tested on 3.13) with `streamlit`, `altair`, `pandas`; `spacy` optional (used for free token estimates, no model download)
-- Copy `.env.example` to `.env` (works as is, in offline mode)
-- Optional: `pip install anthropic` + `ANTHROPIC_API_KEY` for claude mode; Ollama for ollama mode
+Python 3.11+ (tested on 3.13) with `fastapi uvicorn httpx pydantic streamlit altair pandas numpy tokenizers spacy`. Embeddings use the locally cached `BAAI/bge-small-en-v1.5` (no download, no PyTorch). Copy `.env.example` to `.env`; it works as is.
 
-## Run in VS Code
-1. **File → Open Folder…** and choose this `ai-tech-consultant` folder (not its parent).
-2. Install the **Python** extension (it brings the debugger) and pick your interpreter.
-3. Press **F5**, then choose:
-   - **Dashboard: demo data** — seeds synthetic usage, then opens the dashboard on http://localhost:8601
-   - **Dashboard: token & cost (real usage)** — reads `data/usage.db`, http://localhost:8600
-   - **Tests: all (offline, free)**
-4. Or **Ctrl+Shift+B** runs the tests, and **Terminal → Run Task…** lists all tasks. Tests also appear in the Testing sidebar.
+## Run it from the VS Code terminal
+Open this folder in VS Code, then **Terminal → New Terminal**:
 
-## Run from a terminal
 ```
-python -m streamlit run dashboard/app.py
-python -m unittest discover -s tests -t . -v
+python run.py ingest --limit 20     # first time only: read 20 help-center articles (~1 min, polite)
+python run.py all                   # API + all screens + cost dashboard. Ctrl+C stops everything
 ```
 
-## Using the gateway
-```python
-from shared.llm_gateway import Gateway, BudgetExceeded
-gw = Gateway()
-r = gw.call(task="knowledge", endpoint="query", system=SYSTEM, messages=[{"role": "user", "content": q}])
-for chunk in gw.stream(task="inbox", endpoint="draft", messages=msgs):  # streaming, faster first words
-    print(chunk, end="")
-```
-Every call is logged (tokens, cost, latency, model, prompt version — never the prompt text). Budgets and per-task models are set on the dashboard's **Budgets & controls** tab. A call that would break a hard limit raises `BudgetExceeded`; near a limit, calls switch to the cheapest model.
+| What | URL | Try this |
+|---|---|---|
+| Task 1 Knowledge Brain API | http://localhost:8100/docs | `POST /query` |
+| Task 1 chat + expert queue | http://localhost:8501 | ask "How do I clone a post type?", then a question it can't answer |
+| Task 2 inbox review | http://localhost:8502 | sidebar → *Load the 56 sample emails* → review, edit, send |
+| Task 3 scope builder | http://localhost:8503 | sidebar → *Load sample meetings A and B* → approve v1 → *New meeting*: follow-up of meeting_a with `meeting_c_followup.txt` |
+| Token & cost dashboard | http://localhost:8600 | spend, tokens, budgets, $0 cap |
+
+Other commands: `python run.py test` (all 76 tests, $0) · `python run.py eval` (all evaluations) · `python run.py api|chat|inbox|scope|dashboard` (one service) · `python run.py ingest` (all articles, resumes) · `python run.py help`.
+The same commands are under **Terminal → Run Task…**, and **Ctrl+Shift+B** runs the tests. F5 entries are in `.vscode/launch.json`.
+
+## Cost: $0 by default
+`LLM_MODE=offline` (default): answers are quoted from the help center, and drafts come from versioned templates. `LLM_MODE=ollama` uses a free local model. Paid Claude calls need `LLM_MODE=claude` **and** `HARD_MONTHLY_CAP_USD` above 0; the cap is **0** by default, so every paid call is blocked before it is sent. **Limitation:** the brief wants Claude at the center with measured model comparisons. At $0 those Claude numbers are not produced, and EVALS.md says so.
+
+## Layout
+`task1-knowledge-brain/` crawl, parse, chunk, embed, search, API, escalations, chat · `task2-inbox-agent/` classify, KB client, drafts, review, 20-in-a-row autonomy, learning · `task3-meeting-to-scope/` 4 transcripts, 5 agents, change report, approval · `shared/` LLM gateway (budgets, streaming, usage log) and guardrails · `dashboard/` token and cost dashboard.

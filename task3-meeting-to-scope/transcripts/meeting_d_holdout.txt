@@ -1,0 +1,16 @@
+# Meeting D - BeautySpot salon directory (HELD OUT: used only for testing, never for building rules)
+# Date: 2026-10-16 · Client: Lena Novak (manager, BeautySpot) · Consultant: Dev Mehta
+# Role-played transcript (scripted for the capstone; replace with your recorded meeting if you have one)
+[00:00:06] Dev (Consultant): Hi Lena, what brings you to us?
+[00:00:11] Lena (Client): BeautySpot lists about 900 salons and spas. Customers love browsing but they still have to phone to book.
+[00:00:27] Lena (Client): We want online booking, so a customer can pick a time slot with a salon right on its profile. That's the main thing, it must work.
+[00:00:49] Dev (Consultant): Should the slots sync with the salons' own calendars?
+[00:00:55] Lena (Client): Not sure. Some use Google Calendar, some use paper. Maybe later.
+[00:01:08] Lena (Client): Second, reviews. We need customers to add photos to their reviews, before and after pictures sell everything.
+[00:01:26] Lena (Client): And login is a pain. We'd like people to sign in with Facebook instead of making a password.
+[00:01:40] Dev (Consultant): Okay. Anything for marketing?
+[00:01:43] Lena (Client): A monthly newsletter to customers with new salons and offers. We need that too.
+[00:02:00] Dev (Consultant): Timeline and budget?
+[00:02:04] Lena (Client): Before December 1st, 2026 for the holiday season. Budget is around $3,000.
+[00:02:18] Lena (Client): We don't need a new logo or branding, that's done.
+[00:02:25] Dev (Consultant): I'll check which of these are existing features and send a scope.

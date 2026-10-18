@@ -1,0 +1,22 @@
+# Meeting C - HomeFixers follow-up (continues Meeting A)
+# Date: 2026-10-15 · Client: Sarah Patel · Consultant: Dev Mehta · Follows: meeting_a
+# Role-played transcript (scripted for the capstone; replace with your recorded meeting if you have one)
+[00:00:03] Dev (Consultant): Hi Sarah, did you get a chance to read the scope?
+[00:00:08] Sarah (Client): I did, thanks. A few changes after talking to my partner.
+[00:00:15] Sarah (Client): First, drop the AI thing. We don't need AI search this year, the budget is better spent elsewhere.
+[00:00:31] Dev (Consultant): Okay, AI search is removed.
+[00:00:35] Sarah (Client): Price range filter - we talked to our pros and most of them will add prices. So yes, we need the price range filter now.
+[00:00:52] Dev (Consultant): So price range moves from open question to confirmed.
+[00:00:57] Sarah (Client): For mobile, instead of only making it faster, we want a sticky filter button at the bottom of the screen so people can filter with one thumb.
+[00:01:18] Dev (Consultant): That changes the mobile requirement. I'll re-estimate it.
+[00:01:23] Sarah (Client): And a new one: customers want to see results on a map. We need a map view of search results.
+[00:01:40] Dev (Consultant): A map view is new. I'll check whether the existing map features cover it.
+[00:01:47] Sarah (Client): Also we'd like a "verified pros only" option, so people can show only verified listings.
+[00:02:03] Dev (Consultant): Noted, verified listings filter is new as well.
+[00:02:09] Sarah (Client): Could you also write two blog posts a month for SEO? Our old agency did that.
+[00:02:20] Dev (Consultant): Content writing wasn't in the agreed scope, so I'll flag it for a separate quote.
+[00:02:27] Sarah (Client): Fair enough.
+[00:02:30] Sarah (Client): Last thing, the campaign moved. We need it live before April 15th, 2027 instead of March 1st.
+[00:02:45] Dev (Consultant): That helps. Search relevance, the category, rating and distance filters, autosuggest and featured sorting stay as agreed?
+[00:02:55] Sarah (Client): Yes, those stay the same.
+[00:03:00] Dev (Consultant): I'll send a revised scope with a change report for your approval.

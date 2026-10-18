@@ -1,0 +1,38 @@
+# Meeting A - HomeFixers: website search improvements
+# Date: 2026-10-06 · Client: Sarah Patel (owner, HomeFixers home-services directory) · Consultant: Dev Mehta
+# Role-played transcript (scripted for the capstone; replace with your recorded meeting if you have one)
+[00:00:05] Dev (Consultant): Thanks for making time, Sarah. Tell me what's going on with the site.
+[00:00:12] Sarah (Client): Sure. So HomeFixers lists about 4,000 local pros - plumbers, electricians, cleaners, that kind of thing. Traffic is fine but people complain they can't find anyone.
+[00:00:31] Dev (Consultant): Can you give me an example?
+[00:00:36] Sarah (Client): Someone types "plumber" and half the results are electricians. Our search isn't great. We need the search to show the right trade first.
+[00:01:02] Dev (Consultant): Okay, so relevance of keyword search is the first problem. Is that across all categories?
+[00:01:10] Sarah (Client): Mostly the trades with overlapping words. Plumbing and heating, electrical and lighting.
+[00:01:25] Dev (Consultant): Got it. What else?
+[00:01:29] Sarah (Client): Filters. We want customers to filter results by service category, by star rating, and by distance from their postcode.
+[00:01:48] Dev (Consultant): Those three are must-haves?
+[00:01:51] Sarah (Client): Yes, those three are a must. Price range would be nice too, but maybe later, I'm not sure our pros will fill in prices.
+[00:02:14] Dev (Consultant): I'll note price range as unclear for now. How do people mostly visit?
+[00:02:20] Sarah (Client): About 70 percent on phones. And on mobile the search page is really clunky. The filter panel takes the whole screen and it's slow.
+[00:02:41] Sarah (Client): We need the mobile search experience to be fast and easy, that's critical for us.
+[00:02:55] Dev (Consultant): Understood. Would suggestions while typing help? Like showing "plumber" after two letters.
+[00:03:04] Sarah (Client): Oh yes, we'd like that. Suggestions as they type would help a lot.
+[00:03:15] Dev (Consultant): Good, I believe the platform already has autosuggest settings, so that may just be configuration. I'll check.
+[00:03:28] Sarah (Client): And the order of results - featured pros who pay us more should show first. Right now it looks random.
+[00:03:44] Dev (Consultant): So sorting, with featured members on top. Should-have or must-have?
+[00:03:49] Sarah (Client): It should be there, but if budget is tight it can wait a little.
+[00:04:05] Sarah (Client): One more thing. Maybe add AI as well? Like a ChatGPT box that recommends the right pro. Everyone is talking about it.
+[00:04:21] Dev (Consultant): What would the AI need to do for your customers, concretely?
+[00:04:26] Sarah (Client): Honestly I'm not sure yet. Something like "describe your problem and we suggest the trade". We'll see.
+[00:04:44] Dev (Consultant): Then I'll keep AI search as an open question with no estimate until we define it.
+[00:05:02] Dev (Consultant): Let's talk constraints. Timeline?
+[00:05:06] Sarah (Client): We run a spring campaign. Everything has to be live before March 1st, 2027.
+[00:05:20] Dev (Consultant): And budget?
+[00:05:23] Sarah (Client): Around $5,000 for this phase. A bit more if it's really worth it.
+[00:05:40] Dev (Consultant): What will you provide on your side?
+[00:05:44] Sarah (Client): I can send the full category list and examples of searches that go wrong. Our designer can give you the logo and brand colours.
+[00:06:05] Dev (Consultant): Perfect. Anything you explicitly do not want in this phase?
+[00:06:10] Sarah (Client): We don't need a homepage redesign. The homepage is fine, it's only search.
+[00:06:22] Dev (Consultant): So to confirm: search relevance, the three filters, mobile search, autosuggest and featured sorting are in. Price range and AI are open questions. Homepage redesign is out.
+[00:06:41] Sarah (Client): Yes, agreed.
+[00:06:45] Dev (Consultant): I'll send you a scope of work by Friday.
+[00:06:50] Sarah (Client): Great, thanks Dev.

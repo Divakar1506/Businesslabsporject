@@ -1,0 +1,48 @@
+{
+  "run_at": "2026-10-18 16:37:35",
+  "cases": 34,
+  "passed": "30/34",
+  "by_split": {
+    "dev": "23/24",
+    "test (meeting D, held out)": "4/7",
+    "all-meetings checks": "3/3"
+  },
+  "latency_ms_per_meeting": {
+    "meeting_a": 3753.0,
+    "meeting_b": 850.6,
+    "meeting_d": 369.1,
+    "meeting_c": 392.0
+  },
+  "cost_usd": 0.0,
+  "estimates_likely_hours": {
+    "meeting_a": 27.0,
+    "meeting_b": 69.9,
+    "meeting_d": 35.8
+  },
+  "failures": [
+    {
+      "case": "SC-14",
+      "split": "dev",
+      "name": "meeting_b acceptance criteria testable",
+      "why": "vague: ['REQ-STRIPE: Card payments through Stripe succeed in test and live mode.', 'REQ-COUPONS: A valid coupon code reduces the order total; an expired code is rejected.']"
+    },
+    {
+      "case": "SC-16",
+      "split": "test",
+      "name": "meeting_d requirement recall",
+      "why": "missing ['REQ-NEWSLETTER']"
+    },
+    {
+      "case": "SC-18",
+      "split": "test",
+      "name": "meeting_d status and priority",
+      "why": "wrong ['REQ-NEWSLETTER']"
+    },
+    {
+      "case": "SC-20",
+      "split": "test",
+      "name": "meeting_d feasibility via Task 1 API",
+      "why": "REQ-REVIEW-PHOTOS: existing_limited (expected existing_config)"
+    }
+  ]
+}

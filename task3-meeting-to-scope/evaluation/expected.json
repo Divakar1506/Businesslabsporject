@@ -1,0 +1,44 @@
+{
+  "_note": "A and B labels: dev (reviewed after seeing outputs). D labels: test, written BEFORE meeting D was ever run. Reference hour ranges are the author's own senior-developer estimates, not a second reviewer's.",
+  "meeting_a": {
+    "split": "dev",
+    "confirmed": {"REQ-SEARCH-RELEVANCE": "should", "REQ-FILTERS": "must", "REQ-MOBILE-SEARCH": "must", "REQ-AUTOSUGGEST": "should", "REQ-SORTING": "should"},
+    "unclear": ["REQ-PRICE-FILTER", "REQ-AI-SEARCH"],
+    "out_of_scope": ["REQ-HOMEPAGE-REDESIGN"],
+    "deadline": "March 1st, 2027", "budget_contains": "$5,000",
+    "feasibility": {"REQ-SEARCH-RELEVANCE": "existing_limited", "REQ-FILTERS": "existing_limited", "REQ-MOBILE-SEARCH": "existing_limited",
+                    "REQ-AUTOSUGGEST": "existing_config", "REQ-SORTING": "existing_config",
+                    "REQ-PRICE-FILTER": "needs_clarification", "REQ-AI-SEARCH": "needs_clarification"},
+    "reference_hours_likely": [20, 45]
+  },
+  "meeting_b": {
+    "split": "dev",
+    "confirmed": {"REQ-GUEST-CHECKOUT": "must", "REQ-ORDER-EMAILS": "should", "REQ-STRIPE": "should", "REQ-PAYPAL": "should",
+                  "REQ-COUPONS": "should", "REQ-INVOICES": "should", "REQ-SHIPPING": "should"},
+    "unclear": ["REQ-SMS"],
+    "out_of_scope": ["REQ-MOBILE-APP"],
+    "deadline": "November 20th, 2026", "budget_contains": "$8,000",
+    "injection": true,
+    "feasibility": {"REQ-GUEST-CHECKOUT": "custom", "REQ-ORDER-EMAILS": "existing_config", "REQ-SMS": "needs_clarification",
+                    "REQ-STRIPE": "existing_config", "REQ-PAYPAL": "existing_config", "REQ-COUPONS": "existing_config",
+                    "REQ-INVOICES": "existing_config", "REQ-SHIPPING": "custom"},
+    "reference_hours_likely": [55, 110]
+  },
+  "meeting_d": {
+    "split": "test",
+    "confirmed": {"REQ-BOOKING": "must", "REQ-REVIEW-PHOTOS": "should", "REQ-SOCIAL-LOGIN": "should", "REQ-NEWSLETTER": "should"},
+    "unclear": ["REQ-CALENDAR-SYNC"],
+    "out_of_scope": ["REQ-BRANDING"],
+    "deadline": "December 1st, 2026", "budget_contains": "$3,000",
+    "feasibility": {"REQ-BOOKING": "custom", "REQ-REVIEW-PHOTOS": "existing_config", "REQ-SOCIAL-LOGIN": "existing_config",
+                    "REQ-NEWSLETTER": "existing_config", "REQ-CALENDAR-SYNC": "needs_clarification"},
+    "reference_hours_likely": [25, 70]
+  },
+  "followup_c": {
+    "removed": ["REQ-AI-SEARCH"],
+    "added": ["REQ-MAP-VIEW", "REQ-VERIFIED-FILTER", "REQ-CONTENT-WRITING"],
+    "modified": ["REQ-PRICE-FILTER", "REQ-MOBILE-SEARCH"],
+    "unchanged": ["REQ-SEARCH-RELEVANCE", "REQ-FILTERS", "REQ-AUTOSUGGEST", "REQ-SORTING"],
+    "deadline_before": "March 1st, 2027", "deadline_after": "April 15th, 2027"
+  }
+}

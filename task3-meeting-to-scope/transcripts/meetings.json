@@ -1,0 +1,6 @@
+[
+  {"id": "meeting_a", "project": "HomeFixers search", "client": "Sarah Patel", "date": "2026-10-06", "file": "meeting_a.txt", "follows": null},
+  {"id": "meeting_b", "project": "CraftMarket checkout", "client": "Marco Ruiz", "date": "2026-10-08", "file": "meeting_b.txt", "follows": null},
+  {"id": "meeting_c", "project": "HomeFixers search", "client": "Sarah Patel", "date": "2026-10-15", "file": "meeting_c_followup.txt", "follows": "meeting_a"},
+  {"id": "meeting_d", "project": "BeautySpot booking", "client": "Lena Novak", "date": "2026-10-16", "file": "meeting_d_holdout.txt", "follows": null, "holdout": true}
+]

@@ -1,26 +1,20 @@
 {
-  // Terminal > Run Task... (or Ctrl+Shift+B for the default build task = tests)
+  // Terminal > Run Task... (every task runs `python run.py <command>` in the VS Code terminal).
+  // Ctrl+Shift+B runs all tests.
   "version": "2.0.0",
   "tasks": [
-    {
-      "label": "Run tests",
-      "type": "shell",
-      "command": "python -X utf8 -m unittest discover -s tests -t . -v",
-      "group": {"kind": "build", "isDefault": true},
-      "problemMatcher": []
-    },
-    {
-      "label": "Seed demo usage data",
-      "type": "shell",
-      "command": "python -X utf8 scripts/seed_demo_usage.py",
-      "problemMatcher": []
-    },
-    {
-      "label": "Dashboard (real usage)",
-      "type": "shell",
-      "command": "python -X utf8 -m streamlit run dashboard/app.py --server.port 8600",
-      "isBackground": true,
-      "problemMatcher": []
-    }
+    {"label": "Run everything (API + all screens + dashboard)", "type": "shell", "command": "python run.py all",
+     "isBackground": true, "problemMatcher": []},
+    {"label": "Run all tests ($0)", "type": "shell", "command": "python run.py test",
+     "group": {"kind": "build", "isDefault": true}, "problemMatcher": []},
+    {"label": "Run all evaluations ($0)", "type": "shell", "command": "python run.py eval", "problemMatcher": []},
+    {"label": "Task 1: ingest 20 articles", "type": "shell", "command": "python run.py ingest --limit 20", "problemMatcher": []},
+    {"label": "Task 1: ingest all articles (resumes)", "type": "shell", "command": "python run.py ingest", "problemMatcher": []},
+    {"label": "Task 1: API only", "type": "shell", "command": "python run.py api", "isBackground": true, "problemMatcher": []},
+    {"label": "Task 1: chat screen", "type": "shell", "command": "python run.py chat", "isBackground": true, "problemMatcher": []},
+    {"label": "Task 2: inbox screen", "type": "shell", "command": "python run.py inbox", "isBackground": true, "problemMatcher": []},
+    {"label": "Task 3: scope builder screen", "type": "shell", "command": "python run.py scope", "isBackground": true, "problemMatcher": []},
+    {"label": "Cost dashboard", "type": "shell", "command": "python run.py dashboard", "isBackground": true, "problemMatcher": []},
+    {"label": "Seed demo usage data", "type": "shell", "command": "python run.py demo-data", "problemMatcher": []}
   ]
 }

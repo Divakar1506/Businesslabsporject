@@ -13,6 +13,12 @@
       "configurations": ["Task 1: Knowledge Brain API (http://localhost:8100/docs)",
                          "Task 2: Inbox review screen (needs the API running)"],
       "stopAll": true
+    },
+    {
+      "name": "Task 3: Scope (Knowledge Brain API + scope builder)",
+      "configurations": ["Task 1: Knowledge Brain API (http://localhost:8100/docs)",
+                         "Task 3: Scope builder screen (needs the API running)"],
+      "stopAll": true
     }
   ],
   "configurations": [
@@ -121,6 +127,43 @@
       "args": ["discover", "-s", "tests", "-t", ".", "-v"],
       "cwd": "${workspaceFolder}/task2-inbox-agent",
       "env": {"PYTHONUTF8": "1", "LLM_MODE": "offline"}
+    },
+    {
+      "name": "Task 3: Scope builder screen (needs the API running)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "ui/app.py", "--server.port", "8503", "--browser.gatherUsageStats", "false"],
+      "cwd": "${workspaceFolder}/task3-meeting-to-scope",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {"PYTHONUTF8": "1", "KB_API_URL": "http://localhost:8100"}
+    },
+    {
+      "name": "Task 3: Run evals (needs the API running, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "evaluation/run_eval.py",
+      "cwd": "${workspaceFolder}/task3-meeting-to-scope",
+      "env": {"PYTHONUTF8": "1", "KB_API_URL": "http://localhost:8100"},
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Task 3: Tests (offline, free)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "unittest",
+      "args": ["discover", "-s", "tests", "-t", ".", "-v"],
+      "cwd": "${workspaceFolder}/task3-meeting-to-scope",
+      "env": {"PYTHONUTF8": "1"}
+    },
+    {
+      "name": "Run everything (python run.py all)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "run.py",
+      "args": ["all"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
     },
     {
       "name": "Tests: all (offline, free)",
