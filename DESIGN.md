@@ -107,7 +107,7 @@ flowchart LR
 |---|---|
 | **Claude at the centre, with measured model comparisons** | The owner set the build cost at **$0** for this submission. Claude calls are paid, so the Claude path is built (gateway, prompts, schema, guardrails) but blocked by the $0 cap. This is the biggest gap against the brief, and it is stated in EVALS.md. |
 | **A vision model that *describes* screenshots** | No free local vision model is available. Instead, **offline OCR** reads the *text* in every screenshot (labels, buttons, menu names), which carries most answers. Pictures without text are still not understood. |
-| **TypeScript for Task 2** | Node.js isn't installed. The brief allows Python ("don't mix"), at the cost of the 10% bonus. |
+| **TypeScript for Task 2** | Not selected: the user wants Python for all three tasks. The brief allows Python; the optional mixed-language bonus is not pursued. |
 | **Full crawl of all 1,537 articles** | Started and resumable, but it stopped at 208. At the observed speed (CPU embeddings, about 5 articles a minute), the full read takes about 5 hours. All evals ran on 208 articles. |
 | **Reranker** | A cross-encoder is cached locally. On the full help center, two failures (Bitcoin, sign-up approval) are "similar but not an answer", which a reranker targets. It is the next experiment. |
 | **Real email sending and recorded meetings** | Sending is simulated (an outbox table). The four meetings are role-play scripts, not recordings. |
@@ -136,4 +136,4 @@ flowchart LR
 2. Turn on the model path (local Ollama first, then Claude with a small cap) and run the same 122 eval cases for a real **quality / cost / speed** comparison of at least two models.
 3. Add a reranker and an "is this evidence actually an answer?" check to fix the Bitcoin-type failure.
 4. Add an eval set of screenshot-only questions once the OCR job finishes, and a vision model for pictures without text.
-5. Add TypeScript for Task 2 if Node.js becomes available.
+5. Keep Task 2 and future task development in Python, per user preference.

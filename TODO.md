@@ -8,7 +8,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `(!)` mandatory per
 |---|---|---|
 | Python | 3.13.13 | OK |
 | spaCy | 3.8.16 installed, **no language model downloaded** | Use `spacy.blank("en")` — free, zero download, tokenizer only |
-| Node.js | **not installed** | Either install Node 20 LTS for Task 2, or build Task 2 in Python (the brief allows this; don't mix languages inside one task) |
+| Node.js | **not required** | All three tasks use Python, per user preference |
 | `anthropic` SDK | **not installed** | `pip install anthropic` (ask first) |
 | Local embedding models | all-MiniLM-L6-v2, bge-small-en-v1.5, ms-marco cross-encoder already cached | Reuse them — no paid embedding API needed |
 | This folder | separate project; nothing from the capstone is built yet | Build under `ai-tech-consultant/` |
@@ -67,7 +67,7 @@ Status key: `[ ]` todo · `[~]` in progress · `[x]` done · `(!)` mandatory per
 - [ ] (!) Rollback: keep the previous chunk version for each article
 - [ ] (!) Small standalone client script that proves the API docs are enough to use it
 
-## 3. Task 2 — Inbox Agent (TypeScript, or Python if Node is not installed)
+## 3. Task 2 — Inbox Agent (Python)
 
 - [ ] (!) Category list: how-to, troubleshooting, project request, refund/cancel, complaint, quote, follow-up
 - [ ] (!) 50+ realistic emails in JSONL with expected category, key facts, expected behavior, risk, and relevant article or "escalate". **Hold out about 15 for final testing**

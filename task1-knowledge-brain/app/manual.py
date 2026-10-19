@@ -12,6 +12,8 @@ Files are kept under data/uploads/ and served by the API so answers can show the
 """
 import hashlib
 import json
+import re
+import threading
 from pathlib import Path
 
 import settings
@@ -24,6 +26,7 @@ from shared import guardrails
 
 UPLOAD_DIR = settings.DB_PATH.parent / "uploads"
 MAX_FILES = 5
+_upload_lock = threading.Lock()
 
 
 class ManualKnowledge:
@@ -40,6 +43,45 @@ class ManualKnowledge:
             ids = [r[0] for r in c.execute("SELECT article_id FROM articles WHERE article_id LIKE 'manual-%'")]
         n = max((int(i.split("-")[1]) for i in ids if i.split("-")[1].isdigit()), default=0) + 1
         return f"manual-{n}"
+
+    def upload(self, name: str, data: bytes, author: str = "") -> dict:
+        """A file alone becomes a populated draft. Retries never replace a reviewed or edited article."""
+        digest = hashlib.sha256(name.encode() + b"\0" + data).hexdigest()[:32]
+        aid = f"manual-upload-{digest}"
+        with _upload_lock:
+            old = self.store.article(aid)
+            if old:
+                return {"article_id": aid, "title": old["title"], "status": old["review_status"],
+                        "existing": True, "files": [], "flags": []}
+            ex = extract(name, data)
+            ex.text = ex.text.lstrip("\ufeff").strip()
+            if ex.kind == "unsupported" or not ex.text.strip():
+                detail = "; ".join(ex.warnings) or "no readable text found"
+                raise ValueError(f"{name}: {detail}. Use Write manually to add text or an image description.")
+            check = guardrails.check_input(ex.text, max_chars=199_000)
+            if not check.ok:
+                raise ValueError(f"{name}: {'; '.join(check.issues)}")
+            title = draft_title(name, ex.text)
+            # Preserve the source wording; make Markdown/Word headings editable section boundaries.
+            text = re.sub(r"^#{1,6}[ \t]+(.+?)(?:[ \t]+#+)?[ \t]*$", r"## \1", ex.text, flags=re.M)
+            sections = from_editable(text)
+            fname = safe_name(name)
+            src = f"/files/{aid}/{fname}"
+            images = []
+            if ex.kind == "image":
+                sections[0]["images"] = [src]
+                images = [{"src": src, "alt": title, "heading": sections[0]["heading"],
+                           "before": "", "after": "", "section": 0}]
+            body = to_editable(sections)
+            art = {"article_id": aid, "url": f"kb://manual/{aid}", "title": title,
+                   "breadcrumb": ["Manual knowledge"], "sections": sections, "images": images,
+                   "body_text": body, "lastmod": None,
+                   "content_hash": hashlib.sha256((title + body).encode()).hexdigest()[:16]}
+            chunks = self._index(art)
+            folder = self.upload_dir / aid
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / fname).write_bytes(data)
+            return {**self._save_pending(art, chunks, author, [ex]), "existing": False}
 
     def create(self, title: str, body: str = "", section: str = "", tags: str = "", image_description: str = "",
                author: str = "", files: list[tuple[str, bytes]] | None = None) -> dict:
@@ -83,10 +125,14 @@ class ManualKnowledge:
                "sections": sections, "images": images, "body_text": "\n".join(meta) + "\n\n" + body_text,
                "lastmod": None, "content_hash": hashlib.sha256(body_text.encode()).hexdigest()[:16]}
         chunks = self._index(art)
+        return self._save_pending(art, chunks, author, reports)
+
+    def _save_pending(self, art: dict, chunks: list[dict], author: str, reports: list[Extracted]) -> dict:
         self.store.save_article(art, chunks, review_status="pending", edited_by=author or None)
         flags = [f"text contains something that looks like an instruction to the AI ({s!r}); "
-                 f"it will be ignored when answering" for s in guardrails.injection_signals(body_text)]
-        return {"article_id": aid, "title": title, "chunks": len(chunks), "flags": flags, "status": "pending",
+                 f"it will be ignored when answering" for s in guardrails.injection_signals(art["body_text"])]
+        return {"article_id": art["article_id"], "title": art["title"], "chunks": len(chunks),
+                "flags": flags, "status": "pending",
                 "files": [{"name": r.name, "kind": r.kind, "method": r.method, "chars": r.chars,
                            "warnings": r.warnings} for r in reports]}
 
@@ -119,8 +165,9 @@ class ManualKnowledge:
         a = self.get(article_id)
         if a["review_status"] != "pending":
             raise ValueError(f"{article_id} is {a['review_status']}, not pending")
-        if (title and title.strip() != a["title"]) or (text is not None and text.strip() != a["editable_text"].strip()):
-            self.edit(article_id, title or a["title"], text if text is not None else a["editable_text"], reviewer)
+        if (title is not None and title.strip() != a["title"]) or (text is not None and text.strip() != a["editable_text"].strip()):
+            self.edit(article_id, title if title is not None else a["title"],
+                      text if text is not None else a["editable_text"], reviewer)
         self.store.set_review(article_id, "approved", reviewer)
         self.store.reactivate_article(article_id)
         return self.get(article_id)
@@ -204,6 +251,17 @@ class ManualKnowledge:
     def file_path(self, article_id: str, name: str) -> Path | None:
         p = (self.upload_dir / safe_name(article_id) / safe_name(name)).resolve()
         return p if p.is_file() and self.upload_dir.resolve() in p.parents else None
+
+
+def draft_title(name: str, text: str) -> str:
+    """Use a short opening heading/line, falling back to a readable filename. No invented content."""
+    first = next((line.strip().lstrip("\ufeff") for line in text.splitlines() if line.strip()), "")
+    first = re.sub(r"^#{1,6}\s+|\s+#+$", "", first).strip()
+    if 3 <= len(first) <= 120 and not first.startswith(("- ", "* ", "|", "```")):
+        return first
+    stem = Path(name.replace("\\", "/")).stem
+    title = re.sub(r"[_-]+", " ", stem).strip()
+    return (title if len(title) >= 3 else "Uploaded knowledge")[:300]
 
 
 def to_editable(sections: list[dict]) -> str:

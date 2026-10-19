@@ -122,7 +122,7 @@ python -m unittest discover -s tests -t . -v
 
 | Brief requirement | Where we are |
 |---|---|
-| Task 1 Python, Task 2 TypeScript (or Python), Task 3 Python | Not started. Node.js isn't installed, so Task 2 will probably be Python. The brief allows this, but students who use both languages get 10% extra. |
+| Task languages | All three tasks now use Python. Python is the user's chosen language; no TypeScript migration is planned. The optional mixed-language bonus is not pursued. |
 | Tasks 2 and 3 call Task 1 through its API | Planned. The gateway and folders are ready for it. |
 | Claude at the center, at least 2 models compared with 20–30 evals each | **Conflict with the $0 goal.** Claude calls cost money, so at $0 we can compare offline and Ollama only. EVALS.md must say this honestly. |
 | Evals for quality, cost and speed | Cost and speed tracking is built (dashboard). The quality eval cases are not written yet. |

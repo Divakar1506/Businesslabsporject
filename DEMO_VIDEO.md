@@ -19,7 +19,7 @@ Words in *italics* are what you say. Everything else is what you click or show. 
 ---
 
 ## 0:00 – 0:30 · You, on camera
-*"Hi, I'm [name]. Software that cost $2,000 two years ago now sells for about $200, so a software company has to do ten times more work to stay alive. Writing code is no longer the slow part. Knowing the product, answering every email, and turning meetings into quotes is. I built an AI Tech Consultant that does those three jobs from one shared Knowledge Brain, and it runs for $0. Let me show you."*
+*"Hi, I'm Divakar. Software that cost $2,000 two years ago now sells for about $200, so a software company has to do ten times more work to stay alive. Writing code is no longer the slow part. Knowing the product, answering every email, and turning meetings into quotes is. I built an AI Tech Consultant that does those three jobs from one shared Knowledge Brain, and it runs for $0. Let me show you."*
 
 → Switch to screen recording only.
 
@@ -34,10 +34,10 @@ Show `DESIGN.md` → the diagram.
    *"It doesn't guess. It says it doesn't know and creates a task for a human expert."* Point at "Sent to the expert queue as #…".
 3. **Expert queue** tab: open that question and answer *"We only answer questions about our product."*, scope **general**, then **Save**.
    *"The expert's answer goes straight into memory."*
-4. **Add knowledge** tab: title *"Holiday support hours"*, attach the Word file and the PNG, then **Send for review**.
-   *"Companies have knowledge that isn't on their website. You can upload Word, PDF or images. The text is pulled out, even text inside images, but nothing goes live until a person approves it."*
-5. **Review new knowledge** tab: change "24 hours" to "12 hours" in the text, then **Approve**.
-   *"The reviewer can correct it before it goes live."*
+4. **Add knowledge** tab: choose the Word file. Its title and article text fill automatically; no form or submit step is needed.
+   *"Companies have knowledge that isn't on their website. Upload Word, PDF, text or images with readable text, and each file becomes a draft article. Nothing goes live until a person approves it."*
+5. **Review new knowledge** tab: change "24 hours" to "12 hours", click **Save edits (keep pending)**, then **Approve**. Point out **Decline** too.
+   *"The reviewer only needs to approve, decline or edit. Saving a correction still leaves the article waiting for approval."*
 6. **Ask:** *"How fast does support reply on public holidays?"* It answers "12 hours" and shows a 📎 uploaded-knowledge source.
 7. Show the sidebar's **Crawl** line, then tab **8100/docs**.
    *"It re-checks the sitemap every night and only re-reads pages that changed. Removed pages disappear from answers, and a crawl never overwrites a human correction. Here's the API the other two tasks use."*

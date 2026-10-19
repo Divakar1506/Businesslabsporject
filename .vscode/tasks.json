@@ -1,26 +1,235 @@
 {
-  // Terminal > Run Task...  Each entry runs `python run.py ...` in the VS Code terminal. Ctrl+C stops it.
-  // Ctrl+Shift+B runs all tests.
   "version": "2.0.0",
   "tasks": [
-    {"label": "Task 1: Knowledge Brain (API + chat)", "type": "shell", "command": "python run.py task1", "isBackground": true, "problemMatcher": []},
-    {"label": "Task 1: tests", "type": "shell", "command": "python run.py test task1", "problemMatcher": []},
-    {"label": "Task 1: evaluation", "type": "shell", "command": "python run.py eval task1", "problemMatcher": []},
-    {"label": "Task 1: ingest 20 articles", "type": "shell", "command": "python run.py ingest --limit 20", "problemMatcher": []},
-    {"label": "Task 1: ingest all articles (resumes)", "type": "shell", "command": "python run.py ingest", "problemMatcher": []},
-
-    {"label": "Task 2: Inbox Agent (+ Task 1 API)", "type": "shell", "command": "python run.py task2", "isBackground": true, "problemMatcher": []},
-    {"label": "Task 2: tests", "type": "shell", "command": "python run.py test task2", "problemMatcher": []},
-    {"label": "Task 2: evaluation", "type": "shell", "command": "python run.py eval task2", "problemMatcher": []},
-
-    {"label": "Task 3: Meeting to Scope (+ Task 1 API)", "type": "shell", "command": "python run.py task3", "isBackground": true, "problemMatcher": []},
-    {"label": "Task 3: tests", "type": "shell", "command": "python run.py test task3", "problemMatcher": []},
-    {"label": "Task 3: evaluation", "type": "shell", "command": "python run.py eval task3", "problemMatcher": []},
-
-    {"label": "Cost dashboard", "type": "shell", "command": "python run.py dashboard", "isBackground": true, "problemMatcher": []},
-    {"label": "Seed demo usage data", "type": "shell", "command": "python run.py demo-data", "problemMatcher": []},
-    {"label": "All tests ($0)", "type": "shell", "command": "python run.py test", "group": {"kind": "build", "isDefault": true}, "problemMatcher": []},
-    {"label": "All evaluations ($0)", "type": "shell", "command": "python run.py eval", "problemMatcher": []},
-    {"label": "Everything at once", "type": "shell", "command": "python run.py all", "isBackground": true, "problemMatcher": []}
+    {
+      "label": "Task 1: Knowledge Brain (API + chat)",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "isBackground": true,
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "task1",
+        "--open-browser"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Task 1: tests",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "test",
+        "task1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Task 1: evaluation",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "eval",
+        "task1"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Task 1: ingest 20 articles",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "ingest",
+        "--limit",
+        "20"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Task 1: ingest all articles (resumes)",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "ingest"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Task 2: Inbox Agent (+ Task 1 API)",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "isBackground": true,
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "task2",
+        "--open-browser"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Task 2: tests",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "test",
+        "task2"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Task 2: evaluation",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "eval",
+        "task2"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Task 3: Meeting to Scope (+ Task 1 API)",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "isBackground": true,
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "task3",
+        "--open-browser"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Task 3: tests",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "test",
+        "task3"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Task 3: evaluation",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "eval",
+        "task3"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Cost dashboard",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "isBackground": true,
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "dashboard",
+        "--open-browser"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Seed demo usage data",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "demo-data"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "All tests ($0)",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "test"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "All evaluations ($0)",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "eval"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Everything at once",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "isBackground": true,
+      "problemMatcher": [],
+      "args": [
+        "${workspaceFolder}/run.py",
+        "all",
+        "--open-browser"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    }
   ]
 }

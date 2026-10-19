@@ -59,6 +59,8 @@ def main():
     valid, invalid = [], []
     for c in cases:
         (valid if all(e in active for e in c["expect"][:1]) or not c["expect"] else invalid).append(c)
+    shots = [c for c in valid if c["split"] == "screenshot"]      # separate group, see screenshot_eval()
+    valid = [c for c in valid if c["split"] in ("dev", "test")]
 
     # 1. retrieval comparison: 6 configurations, measured separately on dev and test
     configs = [(m, d) for m in MODES for d in (False, True)]
@@ -155,9 +157,62 @@ def main():
                        "cost_usd": 0.0,
                        "failures": [{"case": r["case_id"], "reason": r["failure_reason"]} for r in results if not r["passed"]]},
     }
+    if shots:
+        summary["screenshots"] = screenshot_eval(brain, store, shots, chosen)
+        for row in summary["screenshots"].pop("rows"):
+            results.append(row)
+        with (EVAL_DIR / "results.csv").open("w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=list(results[0]))
+            w.writeheader()
+            w.writerows(results)
     (EVAL_DIR / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps({k: v for k, v in summary.items() if k != "calibration"} |
                      {"calibration": {k: v for k, v in calibration.items() if k != "scores"}}, indent=2))
+
+
+def screenshot_eval(brain, store, shots, threshold) -> dict:
+    """Questions whose answer is only in a screenshot, run twice: with the OCR text in the index and
+    without it (screenshot lines removed, those chunks re-embedded). A case passes when the expected
+    article is cited AND the answer quotes one of the screenshot-only words in `answer_terms`."""
+    from retrieval.chunker import embed_text
+    from retrieval.index import HybridIndex
+    with_idx = brain.index
+    chunks = store.active_chunks()
+    changed = [i for i, c in enumerate(chunks) if "Screenshot shows:" in c["text"]]
+    stripped = []
+    for c in chunks:
+        c = dict(c)
+        if "Screenshot shows:" in c["text"]:
+            kept = [l for l in c["text"].split("\n") if not l.startswith("Screenshot shows:")]
+            c["text"] = "\n".join(kept).strip() or c["title"]
+        stripped.append(c)
+    vecs = brain.embedder.encode([embed_text(stripped[i]["title"], stripped[i]["heading"] or "", stripped[i]["text"])
+                                  for i in changed])
+    for i, v in zip(changed, vecs):
+        stripped[i]["embedding"] = v.tobytes()
+    without_idx = HybridIndex(stripped, brain.embedder.dim)
+
+    out, rows = {}, []
+    for label, idx in (("with_ocr", with_idx), ("without_ocr", without_idx)):
+        brain._index = idx
+        passed = hit5 = 0
+        for c in shots:
+            r = brain.query(c["question"], escalate=False, min_score=threshold)
+            cited = any(f"/articles/{e}" in s["url"] for e in c["expect"] for s in r["sources"])
+            quoted = any(t.lower() in r["answer"].lower() for t in c.get("answer_terms", []))
+            ok = r["status"] == "answered" and cited and quoted
+            passed += ok
+            hit5 += cited
+            rows.append({"task": "knowledge", "case_id": c["id"], "split": f"screenshot/{label}", "type": "screenshot",
+                         "model": r["model"] or "offline/extractive", "expected": "|".join(c["expect"]),
+                         "actual": r["status"], "quality": int(ok), "latency_ms": r["latency_ms"], "cost": 0.0,
+                         "passed": ok, "failure_reason": "" if ok else
+                         ("abstained" if r["status"] != "answered" else "not cited" if not cited else "screenshot words not in answer")})
+        out[label] = {"passed": f"{passed}/{len(shots)}", "expected_article_cited": f"{hit5}/{len(shots)}"}
+    brain._index = with_idx
+    out["chunks_with_screenshot_text"] = len(changed)
+    out["rows"] = rows
+    return out
 
 
 if __name__ == "__main__":

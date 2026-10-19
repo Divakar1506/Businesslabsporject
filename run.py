@@ -1,4 +1,6 @@
-"""Run the project from the VS Code terminal (Terminal > New Terminal, in this folder).
+"""Run from VS Code's Run and Debug dropdown, or run this file to open every screen.
+With no arguments, starts all tasks and opens their localhost pages automatically.
+Add --open-browser to a service command to open its page once it is ready.
 
 Each task on its own (Ctrl+C stops it):
     python run.py task1          Task 1: Knowledge Brain API + chat     http://localhost:8501  (API :8100/docs)
@@ -25,6 +27,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+import webbrowser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -63,31 +66,61 @@ SERVICES = {
 
 
 def api_up() -> bool:
+    return service_up("api")
+
+
+def service_up(name: str) -> bool:
+    url = f"{API}/health" if name == "api" else SERVICES[name][2] + "/_stcore/health"
     try:
-        return urllib.request.urlopen(f"{API}/health", timeout=2).status == 200
+        with urllib.request.urlopen(url, timeout=2) as response:
+            return response.status == 200
     except Exception:
         return False
 
 
-def wait_for_api(seconds: int = 60) -> bool:
-    for _ in range(seconds):
-        if api_up():
+def wait_for_service(name: str, process: subprocess.Popen, seconds: int = 60) -> bool:
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            return False
+        if service_up(name):
             return True
-        time.sleep(1)
+        time.sleep(0.25)
     return False
 
 
-def start(names: list[str]) -> list[subprocess.Popen]:
+def stop(procs: list[subprocess.Popen]) -> None:
+    for process in procs:
+        if process.poll() is None:
+            process.terminate()
+    for process in procs:
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+
+
+def start(names: list[str], open_browser: bool = False) -> list[subprocess.Popen]:
     procs = []
-    for name in names:
-        if name == "api" and api_up():
-            print("  api        already running ->", SERVICES["api"][2])
-            continue
-        cmd, cwd, url = SERVICES[name]
-        procs.append(subprocess.Popen(cmd, cwd=cwd, env=env()))
-        print(f"  {name:10} {url}")
-        if name == "api" and not wait_for_api():
-            print("  ! the API did not start - check the messages above")
+    try:
+        for name in names:
+            cmd, cwd, url = SERVICES[name]
+            if service_up(name):
+                print(f"  {name:10} already running -> {url}")
+            else:
+                process = subprocess.Popen(cmd, cwd=cwd, env=env())
+                procs.append(process)
+                print(f"  {name:10} starting -> {url}", flush=True)
+                if not wait_for_service(name, process):
+                    raise RuntimeError(f"{name} did not become ready. Check the messages above and port {url}.")
+            # The API is a dependency; open its docs only when launched on its own.
+            if open_browser and (name != "api" or names == ["api"]):
+                if not webbrowser.open_new_tab(url):
+                    print(f"  Browser could not open automatically. Open {url}")
+    except BaseException:
+        stop(procs)
+        raise
     return procs
 
 
@@ -99,8 +132,7 @@ def hold(procs: list[subprocess.Popen]) -> None:
     except KeyboardInterrupt:
         pass
     finally:
-        for p in procs:
-            p.terminate()
+        stop(procs)
         print("Stopped.")
 
 
@@ -110,20 +142,24 @@ def run(cmd: list[str], cwd: Path) -> int:
 
 
 def main(argv: list[str]) -> int:
-    if not argv or argv[0] in ("-h", "--help", "help"):
+    if not argv:
+        argv = ["all", "--open-browser"]
+    if argv[0] in ("-h", "--help", "help"):
         print(__doc__)
         return 0
-    what, rest = argv[0], argv[1:]
+    open_browser = "--open-browser" in argv
+    argv = [arg for arg in argv if arg != "--open-browser"]
+    what, rest = (argv[0], argv[1:]) if argv else ("all", [])
     what = {"task1": "chat", "task2": "inbox", "task3": "scope"}.get(what, what)
-    if what == "all":
-        if not (T1 / "data" / "kb.db").exists():
-            print("No knowledge base yet: run  python run.py ingest --limit 20  first (about 1 minute).")
-        print("Starting:")
-        hold(start(["api", "chat", "inbox", "scope", "dashboard"]))
-        return 0
-    if what in SERVICES:
-        procs = start(["api", what] if what in ("chat", "inbox", "scope") else [what])
-        hold(procs) if procs else print("Nothing to start.")
+    if what == "all" or what in SERVICES:
+        names = (["api", "chat", "inbox", "scope", "dashboard"] if what == "all" else
+                 ["api", what] if what in ("chat", "inbox", "scope") else [what])
+        try:
+            procs = start(names, open_browser=open_browser)
+            hold(procs) if procs else print("Already running. Pages are available at the URLs above.")
+        except (RuntimeError, OSError) as exc:
+            print(f"Could not start: {exc}")
+            return 1
         return 0
     if what == "ingest":
         return run([PY, "run_ingest.py", *rest], T1)

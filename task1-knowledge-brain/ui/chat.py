@@ -4,6 +4,7 @@ Talks to the API over HTTP only, like Tasks 2 and 3 will.
 - Ask: chat with answers, sources, screenshots, and a clear "sent to an expert" state.
 - Expert queue: open questions the brain could not answer; resolving one adds it to memory.
 """
+import hashlib
 import os
 from datetime import date, datetime
 
@@ -57,41 +58,82 @@ tab_ask, tab_expert, tab_add, tab_review, tab_manage = st.tabs(
     ["Ask", "Expert queue", "Add knowledge", "Review new knowledge", "Manage knowledge"])
 
 with tab_add:
-    st.caption("Add your own knowledge: fill in the form and attach files. Text is pulled out of the files. "
-               "It goes to **Review new knowledge** first and is used in answers only after a person approves it.")
-    with st.form("add_knowledge", clear_on_submit=True):
-        title = st.text_input("Title *", placeholder="e.g. Refund policy for annual plans")
-        c1, c2 = st.columns(2)
-        section = c1.text_input("Section / category", placeholder="e.g. Billing")
-        tags = c2.text_input("Tags (comma separated)", placeholder="refund, annual, billing")
-        body = st.text_area("Knowledge text", height=200,
-                            placeholder="Write the answer the way you would explain it to a customer…")
-        files = st.file_uploader("Attach files (JPG, PNG, PDF, Word .docx, .txt, .md — up to 5, 10 MB each)",
-                                 type=["jpg", "jpeg", "png", "pdf", "docx", "txt", "md"], accept_multiple_files=True)
-        img_desc = st.text_area("Describe the image(s) (makes screenshots searchable)", height=80,
-                                placeholder="e.g. Settings › Billing page with the 'Refund' button highlighted")
-        author = st.text_input("Your name")
-        if st.form_submit_button("Send for review", type="primary"):
-            payload = [("files", (f.name, f.getvalue(), f.type or "application/octet-stream")) for f in files or []]
-            res, e = api("POST", "/articles", data={"title": title, "body": body, "section": section, "tags": tags,
-                                                    "image_description": img_desc, "author": author},
-                         files=payload or None)
+    st.subheader("Upload files → review articles")
+    st.caption("Choose files and we automatically fill in a draft article for each file, including its title, "
+               "text and document sections. Open **Review new knowledge** to approve, decline or edit. "
+               "Only approved articles are used in answers.")
+    uploads = st.file_uploader("Upload knowledge files (up to 5, 10 MB each)",
+                               type=["jpg", "jpeg", "png", "pdf", "docx", "txt", "md"],
+                               accept_multiple_files=True, key="auto_knowledge_files")
+    results = st.session_state.setdefault("knowledge_upload_results", {})
+    changed = False
+    if len(uploads or []) > 5:
+        st.error("Choose at most 5 files at a time. Remove extra files to continue.")
+    else:
+        for f in uploads or []:
+            data = f.getvalue()
+            key = hashlib.sha256(f.name.encode() + b"\0" + data).hexdigest()
+            if key not in results:
+                if len(data) > 10 * 1024 * 1024:
+                    results[key] = (None, "File is larger than 10 MB. Choose a smaller file.")
+                else:
+                    with st.spinner(f"Preparing an article from {f.name}…"):
+                        results[key] = api("POST", "/articles/upload", data={"author": me},
+                                           files={"file": (f.name, data, f.type or "application/octet-stream")})
+                changed = True
+            res, e = results[key]
             if e:
-                st.error(e)
+                st.error(f"{f.name}: {e}")
+                if st.button("Retry upload", key=f"retry_{key}"):
+                    del results[key]
+                    st.rerun()
             else:
-                st.success(f"Sent for review as **{res['article_id']}**. It is **not** used in answers until someone "
-                           f"approves it in **Review new knowledge**.")
-                for f in res["files"]:
-                    icon = "✅" if f["kind"] != "unsupported" and (f["chars"] or f["kind"] == "image") else "⚠️"
-                    st.markdown(f"{icon} **{f['name']}** — {f['method'] or f['kind']}, {f['chars']:,} characters of text")
-                    for w in f["warnings"]:
-                        st.caption(f"   ⚠️ {w}")
-                for fl in res["flags"]:
-                    st.warning(f"🛡️ {fl}")
+                st.success(f"{f.name} → {res['title']}")
+                if res.get("existing"):
+                    st.caption("Already uploaded. Your existing article, edits and review decision have been kept.")
+                else:
+                    st.caption("Draft created in Review new knowledge.")
+                for report in res["files"]:
+                    for warning in report["warnings"]:
+                        st.warning(warning)
+                for flag in res["flags"]:
+                    st.warning(flag)
+        if changed:
+            st.rerun()  # Refresh the queue count; completed files are not submitted again.
+
+    with st.expander("Write manually (or describe an image with no readable text)"):
+        with st.form("add_knowledge", clear_on_submit=True):
+            title = st.text_input("Title *", placeholder="e.g. Refund policy for annual plans")
+            c1, c2 = st.columns(2)
+            section = c1.text_input("Section / category", placeholder="e.g. Billing")
+            tags = c2.text_input("Tags (comma separated)", placeholder="refund, annual, billing")
+            body = st.text_area("Knowledge text", height=200,
+                                placeholder="Write the answer the way you would explain it to a customer…")
+            files = st.file_uploader("Attach files (JPG, PNG, PDF, Word .docx, .txt, .md — up to 5, 10 MB each)",
+                                     type=["jpg", "jpeg", "png", "pdf", "docx", "txt", "md"], accept_multiple_files=True)
+            img_desc = st.text_area("Describe the image(s) (makes screenshots searchable)", height=80,
+                                    placeholder="e.g. Settings › Billing page with the 'Refund' button highlighted")
+            if st.form_submit_button("Send for review", type="primary"):
+                payload = [("files", (f.name, f.getvalue(), f.type or "application/octet-stream")) for f in files or []]
+                res, e = api("POST", "/articles", data={"title": title, "body": body, "section": section, "tags": tags,
+                                                        "image_description": img_desc, "author": me},
+                             files=payload or None)
+                if e:
+                    st.error(e)
+                else:
+                    st.success(f"Sent for review as **{res['article_id']}**. Open **Review new knowledge** to review it.")
+                    for report in res["files"]:
+                        for warning in report["warnings"]:
+                            st.warning(warning)
+                    for flag in res["flags"]:
+                        st.warning(flag)
 
 with tab_review:
-    st.caption("New knowledge waits here. Read what was extracted, correct it if needed, then approve it into the "
-               "knowledge base or reject it. Lines starting with `## ` begin a new section.")
+    st.caption("Articles are filled in for you and wait here. Approve to use an article in answers, decline to "
+               "discard it, or save edits and keep it pending. Enter your name in the sidebar to approve or edit. "
+               "Lines starting with `## ` begin a new section.")
+    if "knowledge_review_notice" in st.session_state:
+        st.success(st.session_state.pop("knowledge_review_notice"))
     pending, e = api("GET", "/articles", params={"status": "pending", "limit": 100})
     if e:
         st.error(e)
@@ -109,16 +151,30 @@ with tab_review:
                 st.caption("Files: " + " · ".join(f"[{n}]({API}/files/{p['article_id']}/{n})" for n in p["files"]))
             for img in full["images"]:
                 st.image(API + img["src"] if img["src"].startswith("/") else img["src"], width=240)
-            t = st.text_input("Title", full["title"], key=f"rt_{p['article_id']}")
-            txt = st.text_area("Text that will be learned", full["editable_text"], height=220, key=f"rx_{p['article_id']}")
-            b1, b2 = st.columns(2)
-            if b1.button("✅ Approve into the knowledge base", key=f"ap_{p['article_id']}", type="primary"):
+            with st.form(f"review_{p['article_id']}"):
+                t = st.text_input("Title", full["title"], key=f"rt_{p['article_id']}", max_chars=300)
+                txt = st.text_area("Text that will be learned", full["editable_text"], height=220,
+                                   key=f"rx_{p['article_id']}", max_chars=200_000)
+                b1, b2, b3 = st.columns(3)
+                approve = b1.form_submit_button("✅ Approve", type="primary", disabled=not me.strip())
+                save = b2.form_submit_button("✏️ Save edits (keep pending)", disabled=not me.strip())
+                decline = b3.form_submit_button("❌ Decline")
+            e3, notice = None, None
+            if approve:
                 _, e3 = api("POST", f"/articles/{p['article_id']}/approve",
                             json={"reviewer": me, "title": t, "text": txt})
-                st.error(e3) if e3 else st.rerun()
-            if b2.button("❌ Reject", key=f"rj_{p['article_id']}"):
+                notice = "Approved. This article can now be used in answers."
+            elif save:
+                _, e3 = api("PUT", f"/articles/{p['article_id']}", json={"title": t, "text": txt, "editor": me})
+                notice = "Edits saved. This article is still waiting for approval."
+            elif decline:
                 _, e3 = api("POST", f"/articles/{p['article_id']}/reject", json={"reviewer": me or "unknown"})
-                st.error(e3) if e3 else st.rerun()
+                notice = "Declined. This article will not be used in answers."
+            if e3:
+                st.error(e3)
+            elif notice:
+                st.session_state.knowledge_review_notice = notice
+                st.rerun()
 
 with tab_manage:
     st.caption("Correct or delete anything the brain knows. Every edit keeps the old version, and crawls never "

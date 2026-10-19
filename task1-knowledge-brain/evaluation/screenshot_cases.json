@@ -1,0 +1,132 @@
+[
+ {
+  "id": "SS-01",
+  "split": "screenshot",
+  "type": "screenshot",
+  "question": "What does the Database Administration page let me set up for 301 redirects?",
+  "expect": [
+   "12000000583"
+  ],
+  "answer_terms": [
+   "301 Redirects"
+  ],
+  "title": "Database Administration"
+ },
+ {
+  "id": "SS-02",
+  "split": "screenshot",
+  "type": "screenshot",
+  "question": "Where in the Media Manager can I upload images and PDF files?",
+  "expect": [
+   "12000000876"
+  ],
+  "answer_terms": [
+   "Upload images and PDF"
+  ],
+  "title": "My Content » Media Manager"
+ },
+ {
+  "id": "SS-03",
+  "split": "screenshot",
+  "type": "screenshot",
+  "question": "What do the Advanced Settings control?",
+  "expect": [
+   "12000058393"
+  ],
+  "answer_terms": [
+   "control website behavior"
+  ],
+  "title": "How to Activate Sales Representative Tracking"
+ },
+ {
+  "id": "SS-04",
+  "split": "screenshot",
+  "type": "screenshot",
+  "question": "How many locations can a member select as service areas?",
+  "expect": [
+   "12000000821"
+  ],
+  "answer_terms": [
+   "Select 3 Locations"
+  ],
+  "title": "All About Service areas / Multi Location Add-on"
+ },
+ {
+  "id": "SS-05",
+  "split": "screenshot",
+  "type": "screenshot",
+  "question": "Which button publishes the first discussion?",
+  "expect": [
+   "12000078809"
+  ],
+  "answer_terms": [
+   "Publish Your First Discussion"
+  ],
+  "title": "How to Enable the Discussions Post Type"
+ },
+ {
+  "id": "SS-06",
+  "split": "screenshot",
+  "type": "screenshot",
+  "question": "Which button publishes the first product?",
+  "expect": [
+   "12000002343"
+  ],
+  "answer_terms": [
+   "Publish Your First Product"
+  ],
+  "title": "How to Post a Product"
+ },
+ {
+  "id": "SS-07",
+  "split": "screenshot",
+  "type": "screenshot",
+  "question": "What do Member Leads manage?",
+  "expect": [
+   "12000069107"
+  ],
+  "answer_terms": [
+   "Manage leads generated from member listings"
+  ],
+  "title": "Member Leads » Edit Leads"
+ },
+ {
+  "id": "SS-08",
+  "split": "screenshot",
+  "type": "screenshot",
+  "question": "Which menu opens the Quick Create options?",
+  "expect": [
+   "12000105771"
+  ],
+  "answer_terms": [
+   "Quick Create"
+  ],
+  "title": "Quick Create Wizard - Create Invoice"
+ },
+ {
+  "id": "SS-09",
+  "split": "screenshot",
+  "type": "screenshot",
+  "question": "What offer is shown on the How to Post a Video screen?",
+  "expect": [
+   "12000001964"
+  ],
+  "answer_terms": [
+   "30% OFF"
+  ],
+  "title": "How to Post a Video"
+ },
+ {
+  "id": "SS-10",
+  "split": "screenshot",
+  "type": "screenshot",
+  "question": "Which Help Center link appears in the top navigation of the Social Media Image article?",
+  "expect": [
+   "12000000520"
+  ],
+  "answer_terms": [
+   "Help Center"
+  ],
+  "title": "How to upload a Social Media Sharing Image to the site"
+ }
+]

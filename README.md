@@ -3,7 +3,25 @@
 One shared **Knowledge Brain** (Task 1) answers product questions from the Brilliant Directories help center with sources. It is used **only through its API** by an **Inbox Agent** (Task 2) that drafts customer replies, and by **Meeting to Scope** (Task 3) that turns client meetings into a scope, an estimate and a proposal. Everything runs **offline at $0** by default.
 More detail: [DESIGN.md](DESIGN.md) · [EVALS.md](EVALS.md) · [AI_LOG.md](AI_LOG.md) · [DEMO_VIDEO.md](DEMO_VIDEO.md) (demo script) · [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [TODO.md](TODO.md)
 
-## Run it (VS Code terminal)
+## Run it with the VS Code Run button
+
+1. Open **Run and Debug** in the left sidebar (**Ctrl+Shift+D**).
+2. Choose **Task 1: Knowledge Brain + open browser**, **Task 2: Inbox Agent + open browser**,
+   **Task 3: Meeting to Scope + open browser**, or **Dashboard: token & cost + open browser**.
+3. Click the green **▶** beside the dropdown (or press **F5**). The required API starts automatically,
+   and your default browser opens the localhost page after the service is ready.
+
+Choose **Run everything + open browser** to open all four screens in one run.
+You can also open `run.py` and click the editor's **Run Python File ▶** button; no arguments are needed.
+The editor's file button runs the file currently open, so select `run.py` for that shortcut.
+Use the Run and Debug dropdown to launch a task while editing any other file.
+Stop a launched session with the red **■** button, or **Ctrl+C** in its terminal.
+Services that were already running are reused and remain running when the new launcher stops.
+
+These Run options work with either `ai-tech-consultant` or its parent `Business Labs Projects` folder open.
+Tests, evaluations, ingestion and screenshot reading also have their own Run entries.
+
+### Optional terminal commands
 Python 3.11+ with `fastapi uvicorn python-multipart httpx pydantic streamlit altair pandas numpy pillow tokenizers spacy`. Copy `.env.example` to `.env` (works as is).
 Open **this** folder first (VS Code: File → Open Folder), or `cd` into it. Running `run.py` from another folder fails with "can't open file run.py".
 ```
@@ -29,6 +47,15 @@ python run.py ingest --limit 20     # first time only: read 20 help-center artic
 
 The same commands, one entry per task, are under **Terminal → Run Task…**. F5 entries are in `.vscode/launch.json`. `python run.py help` lists everything.
 
+### Upload your own knowledge
+
+In Task 1, open **Add knowledge** and choose up to 5 PDF, Word `.docx`, TXT, Markdown, JPG or PNG files (10 MB each).
+Each readable file automatically becomes a draft with its title, text and document sections filled in; no article form is required.
+Open **Review new knowledge** to **Approve**, **Decline**, or **Save edits (keep pending)**. Enter your name in the sidebar to approve or edit.
+Drafts and declined articles are never used in answers. Uploading the same filename and contents again keeps the existing article and its review decision.
+If a file has no readable text, use **Write manually** to provide the content or an image description. Extraction runs locally at $0.
+API clients can send a single multipart `file` to `POST /articles/upload`; the existing `POST /articles` form remains available.
+
 ## What the brief asked for, what was built, and what was added
 Status: ✅ done · 🟡 partly done · ❌ not done. Every number comes from [EVALS.md](EVALS.md).
 
@@ -41,12 +68,12 @@ Status: ✅ done · 🟡 partly done · ❌ not done. Every number comes from [E
 | Chatbot: correct answer, sources, honest "don't know" | ✅ 30/32 evals on the full help center | `app/answer.py`, `ui/chat.py`: vector search (re-chosen on dev after the full crawl), citations, abstains below 0.68 | Local embeddings in NumPy (no download, no PyTorch); 6 search setups compared on dev; threshold re-checked on 1,539 articles |
 | Clean API usable from its docs alone | ✅ | FastAPI `/query`, `/escalations`, `/ingestion/*`, `/health`, OpenAPI at `/docs` | Typed request/response schemas, optional bearer token, 60 s timeout, `source` tag per caller |
 | Can't answer → expert task → answer flows back into memory | ✅ | Expert queue tab; `POST /escalations/{id}/resolve` | *General* vs *customer-only* answers; expiry dates; PII masked before storing; escalated questions saved for future evals |
-| *(brief: "or a custom document or knowledge base")* | ✅ | **Add knowledge** tab: a form with title, section, tags, text and image description, plus up to 5 files (JPG, PNG, PDF, Word .docx, .txt, .md). Text is extracted, then the article **waits for human approval** (**Review new knowledge** tab: correct, then approve or reject) before it is used in answers. `POST /articles`, `/articles/{id}/approve`, `/reject` | **Manage knowledge** tab: **edit** any article (uploaded, expert or help-center; old versions kept), **delete** and restore. A crawl **never overwrites a human edit**; if the help center changes the page, the article is flagged for a person |
+| *(brief: "or a custom document or knowledge base")* | ✅ | **Add knowledge** tab: upload up to 5 files (JPG, PNG, PDF, Word .docx, .txt, .md); each readable file automatically fills a draft's title, text and document sections. **Review new knowledge**: approve, decline, or save edits while keeping it pending. Only approved articles are used in answers. `POST /articles/upload`; the optional manual form still uses `POST /articles`. | **Manage knowledge** tab: **edit** any article (uploaded, expert or help-center; old versions kept), **delete** and restore. A crawl **never overwrites a human edit**; if the help center changes the page, the article is flagged for a person |
 
-### Task 2 — Inbox Agent (Python, as the brief allows instead of TypeScript)
+### Task 2 — Inbox Agent (Python)
 | Brief requirement | Status | How / where | **Additional (beyond the brief)** |
 |---|---|---|---|
-| TypeScript | 🟡 Python | Node.js is not installed; the brief allows Python without mixing | — *(loses the 10% bonus)* |
+| Task 2 language | ✅ Python | Python is the chosen language for all three tasks, per user preference; the brief allows it | The optional mixed-language bonus is not pursued |
 | Understand each email, get facts from Task 1's API, draft in the company voice | ✅ | `inbox/classifier.py`, `kb_client.py`, `drafter.py`; held-out category 20/20, 21/23 answers grounded in the right article (full help center; 50/56 emails pass every check) | Urgency and risk scoring; quote emails check whether an existing feature already covers the request |
 | Human sends, edits, or writes their own | ✅ | `ui/review.py`: Send / Reject (own reply) / Expert / Redraft | Simulated outbox; one send per email (no duplicates) |
 | Learn from every email; prove better, not worse | ✅ | `inbox/learning.py`: deleted sentences become versioned style rules, adopted only if a replay improves and changes no approved draft | One-click rollback; edit-rate and correction-reason stats |

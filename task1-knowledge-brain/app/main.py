@@ -23,6 +23,7 @@ from app.schemas import (ArticleEdit, Escalation, EscalationCreate, EscalationRe
                          IngestionRunRequest, QueryRequest, QueryResponse, ReviewDecision)
 from shared import guardrails  # noqa: E402
 from ingestion import pipeline  # noqa: E402
+from ingestion.documents import MAX_FILE_BYTES  # noqa: E402
 from ingestion.store import KBStore  # noqa: E402
 
 @asynccontextmanager
@@ -85,6 +86,23 @@ def list_articles(source: str = "all", q: str = "", include_removed: bool = True
     if status not in (None, "pending", "approved", "rejected"):
         raise HTTPException(422, "status must be pending, approved or rejected")
     return manual().list(source, q, include_removed, min(limit, 2000), status)
+
+
+@app.post("/articles/upload", status_code=201, dependencies=[Depends(auth)])
+async def upload_article(file: UploadFile = File(...), author: str = Form("", max_length=100)):
+    """Auto-fill one pending article from a file, with no form fields required.
+
+    Supports PDF, Word .docx, TXT, Markdown, JPG and PNG (10 MB). Title, sections and text are
+    extracted locally. Uploading the same filename and contents returns the existing article without
+    overwriting edits or changing its approval status. Unreadable files return a clear error.
+    """
+    data = await file.read(MAX_FILE_BYTES + 1)
+    if len(data) > MAX_FILE_BYTES:
+        raise HTTPException(413, "file is larger than 10 MB")
+    try:
+        return await asyncio.to_thread(manual().upload, file.filename or "file", data, author)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
 
 
 @app.get("/articles/{article_id}", dependencies=[Depends(auth)])

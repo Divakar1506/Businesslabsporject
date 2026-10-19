@@ -9,3 +9,6 @@ data/*.jsonl
 !data/.gitkeep
 **/data/*.db
 **/data/*.db-*
+.presentation-build/
+**/data/uploads/
+demo-media/

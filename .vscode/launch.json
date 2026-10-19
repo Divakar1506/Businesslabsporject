@@ -1,178 +1,402 @@
 {
-  // Press F5 in VS Code and pick one of these. Open the "ai-tech-consultant" folder itself (File > Open Folder).
   "version": "0.2.0",
-  "compounds": [
-    {
-      "name": "Task 1: API + Chat screen (start both)",
-      "configurations": ["Task 1: Knowledge Brain API (http://localhost:8100/docs)",
-                         "Task 1: Chat & expert screen (needs the API running)"],
-      "stopAll": true
-    },
-    {
-      "name": "Task 2: Inbox (Knowledge Brain API + review screen)",
-      "configurations": ["Task 1: Knowledge Brain API (http://localhost:8100/docs)",
-                         "Task 2: Inbox review screen (needs the API running)"],
-      "stopAll": true
-    },
-    {
-      "name": "Task 3: Scope (Knowledge Brain API + scope builder)",
-      "configurations": ["Task 1: Knowledge Brain API (http://localhost:8100/docs)",
-                         "Task 3: Scope builder screen (needs the API running)"],
-      "stopAll": true
-    }
-  ],
   "configurations": [
     {
-      "name": "Dashboard: token & cost (real usage)",
+      "name": "Run everything + open browser",
       "type": "debugpy",
       "request": "launch",
-      "module": "streamlit",
-      "args": ["run", "dashboard/app.py", "--server.port", "8600", "--server.headless", "false", "--browser.gatherUsageStats", "false"],
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "all",
+        "--open-browser"
+      ],
       "cwd": "${workspaceFolder}",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {"PYTHONUTF8": "1"},
-      "justMyCode": true
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "justMyCode": true,
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "presentation": {
+        "group": "1. Run apps",
+        "order": 0
+      }
     },
     {
-      "name": "Dashboard: demo data",
+      "name": "Task 1: Knowledge Brain + open browser",
       "type": "debugpy",
       "request": "launch",
-      "module": "streamlit",
-      "args": ["run", "dashboard/app.py", "--server.port", "8601", "--server.headless", "false", "--browser.gatherUsageStats", "false", "--", "--db", "data/demo_usage.db"],
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "task1",
+        "--open-browser"
+      ],
       "cwd": "${workspaceFolder}",
-      "env": {"PYTHONUTF8": "1"},
-      "preLaunchTask": "Seed demo usage data"
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "justMyCode": true,
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "presentation": {
+        "group": "1. Run apps",
+        "order": 1
+      }
     },
     {
-      "name": "Task 1: Knowledge Brain API (http://localhost:8100/docs)",
+      "name": "Task 2: Inbox Agent + open browser",
       "type": "debugpy",
       "request": "launch",
-      "module": "uvicorn",
-      "args": ["app.main:app", "--port", "8100"],
-      "cwd": "${workspaceFolder}/task1-knowledge-brain",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {"PYTHONUTF8": "1"}
-    },
-    {
-      "name": "Task 1: Chat & expert screen (needs the API running)",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "streamlit",
-      "args": ["run", "ui/chat.py", "--server.port", "8501", "--browser.gatherUsageStats", "false"],
-      "cwd": "${workspaceFolder}/task1-knowledge-brain",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {"PYTHONUTF8": "1", "KB_API_URL": "http://localhost:8100"}
-    },
-    {
-      "name": "Task 1: Run evals (offline, $0)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "evaluation/run_eval.py",
-      "cwd": "${workspaceFolder}/task1-knowledge-brain",
-      "env": {"PYTHONUTF8": "1", "LLM_MODE": "offline"},
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Task 1: Ingest 20 articles (polite, ~1 min)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "run_ingest.py",
-      "args": ["--limit", "20"],
-      "cwd": "${workspaceFolder}/task1-knowledge-brain",
-      "env": {"PYTHONUTF8": "1"},
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Task 1: Ingest ALL articles (polite, ~40 min)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "run_ingest.py",
-      "cwd": "${workspaceFolder}/task1-knowledge-brain",
-      "env": {"PYTHONUTF8": "1"},
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Task 1: Tests (offline, free)",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "unittest",
-      "args": ["discover", "-s", "tests", "-t", ".", "-v"],
-      "cwd": "${workspaceFolder}/task1-knowledge-brain",
-      "env": {"PYTHONUTF8": "1", "LLM_MODE": "offline"}
-    },
-    {
-      "name": "Task 2: Inbox review screen (needs the API running)",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "streamlit",
-      "args": ["run", "ui/review.py", "--server.port", "8502", "--browser.gatherUsageStats", "false"],
-      "cwd": "${workspaceFolder}/task2-inbox-agent",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {"PYTHONUTF8": "1", "KB_API_URL": "http://localhost:8100"}
-    },
-    {
-      "name": "Task 2: Run evals (needs the API running, $0)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "evaluation/run_eval.py",
-      "cwd": "${workspaceFolder}/task2-inbox-agent",
-      "env": {"PYTHONUTF8": "1", "LLM_MODE": "offline", "KB_API_URL": "http://localhost:8100"},
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Task 2: Tests (offline, free)",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "unittest",
-      "args": ["discover", "-s", "tests", "-t", ".", "-v"],
-      "cwd": "${workspaceFolder}/task2-inbox-agent",
-      "env": {"PYTHONUTF8": "1", "LLM_MODE": "offline"}
-    },
-    {
-      "name": "Task 3: Scope builder screen (needs the API running)",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "streamlit",
-      "args": ["run", "ui/app.py", "--server.port", "8503", "--browser.gatherUsageStats", "false"],
-      "cwd": "${workspaceFolder}/task3-meeting-to-scope",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {"PYTHONUTF8": "1", "KB_API_URL": "http://localhost:8100"}
-    },
-    {
-      "name": "Task 3: Run evals (needs the API running, $0)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "evaluation/run_eval.py",
-      "cwd": "${workspaceFolder}/task3-meeting-to-scope",
-      "env": {"PYTHONUTF8": "1", "KB_API_URL": "http://localhost:8100"},
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Task 3: Tests (offline, free)",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "unittest",
-      "args": ["discover", "-s", "tests", "-t", ".", "-v"],
-      "cwd": "${workspaceFolder}/task3-meeting-to-scope",
-      "env": {"PYTHONUTF8": "1"}
-    },
-    {
-      "name": "Run everything (python run.py all)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "run.py",
-      "args": ["all"],
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "task2",
+        "--open-browser"
+      ],
       "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "justMyCode": true,
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "presentation": {
+        "group": "1. Run apps",
+        "order": 2
+      }
     },
     {
-      "name": "Tests: all (offline, free)",
+      "name": "Task 3: Meeting to Scope + open browser",
       "type": "debugpy",
       "request": "launch",
-      "module": "unittest",
-      "args": ["discover", "-s", "tests", "-t", ".", "-v"],
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "task3",
+        "--open-browser"
+      ],
       "cwd": "${workspaceFolder}",
-      "env": {"PYTHONUTF8": "1"}
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "justMyCode": true,
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "presentation": {
+        "group": "1. Run apps",
+        "order": 3
+      }
+    },
+    {
+      "name": "Dashboard: token & cost + open browser",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "dashboard",
+        "--open-browser"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "justMyCode": true,
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "presentation": {
+        "group": "1. Run apps",
+        "order": 4
+      }
+    },
+    {
+      "name": "Knowledge Brain API docs + open browser",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "api",
+        "--open-browser"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "justMyCode": true,
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "presentation": {
+        "group": "1. Run apps",
+        "order": 5
+      }
+    },
+    {
+      "name": "Task1: Tests (offline, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "test",
+        "task1"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1",
+        "LLM_MODE": "offline",
+        "HARD_MONTHLY_CAP_USD": "0"
+      },
+      "presentation": {
+        "group": "2. Tests and evaluations"
+      }
+    },
+    {
+      "name": "Task1: Evaluations (offline, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "eval",
+        "task1"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1",
+        "LLM_MODE": "offline",
+        "HARD_MONTHLY_CAP_USD": "0"
+      },
+      "presentation": {
+        "group": "2. Tests and evaluations"
+      }
+    },
+    {
+      "name": "Task2: Tests (offline, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "test",
+        "task2"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1",
+        "LLM_MODE": "offline",
+        "HARD_MONTHLY_CAP_USD": "0"
+      },
+      "presentation": {
+        "group": "2. Tests and evaluations"
+      }
+    },
+    {
+      "name": "Task2: Evaluations (offline, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "eval",
+        "task2"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1",
+        "LLM_MODE": "offline",
+        "HARD_MONTHLY_CAP_USD": "0"
+      },
+      "presentation": {
+        "group": "2. Tests and evaluations"
+      }
+    },
+    {
+      "name": "Task3: Tests (offline, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "test",
+        "task3"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1",
+        "LLM_MODE": "offline",
+        "HARD_MONTHLY_CAP_USD": "0"
+      },
+      "presentation": {
+        "group": "2. Tests and evaluations"
+      }
+    },
+    {
+      "name": "Task3: Evaluations (offline, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "eval",
+        "task3"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1",
+        "LLM_MODE": "offline",
+        "HARD_MONTHLY_CAP_USD": "0"
+      },
+      "presentation": {
+        "group": "2. Tests and evaluations"
+      }
+    },
+    {
+      "name": "Shared: Tests (offline, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "test",
+        "shared"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1",
+        "LLM_MODE": "offline",
+        "HARD_MONTHLY_CAP_USD": "0"
+      },
+      "presentation": {
+        "group": "2. Tests and evaluations"
+      }
+    },
+    {
+      "name": "All: Tests (offline, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "test"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1",
+        "LLM_MODE": "offline",
+        "HARD_MONTHLY_CAP_USD": "0"
+      },
+      "presentation": {
+        "group": "2. Tests and evaluations"
+      }
+    },
+    {
+      "name": "All: Evaluations (offline, $0)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "eval"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1",
+        "LLM_MODE": "offline",
+        "HARD_MONTHLY_CAP_USD": "0"
+      },
+      "presentation": {
+        "group": "2. Tests and evaluations"
+      }
+    },
+    {
+      "name": "Task 1: Ingest 20 articles",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "ingest",
+        "--limit",
+        "20"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "presentation": {
+        "group": "3. Knowledge maintenance"
+      }
+    },
+    {
+      "name": "Task 1: Ingest all articles (resumes)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "ingest"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "presentation": {
+        "group": "3. Knowledge maintenance"
+      }
+    },
+    {
+      "name": "Task 1: Read screenshots (resumes)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run.py",
+      "args": [
+        "images"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "subProcess": true,
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "presentation": {
+        "group": "3. Knowledge maintenance"
+      }
+    },
+    {
+      "name": "Dashboard: demo data + open browser",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": [
+        "run",
+        "dashboard/app.py",
+        "--server.port",
+        "8601",
+        "--server.headless",
+        "false",
+        "--browser.gatherUsageStats",
+        "false",
+        "--",
+        "--db",
+        "data/demo_usage.db"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONUTF8": "1"
+      },
+      "preLaunchTask": "Seed demo usage data",
+      "presentation": {
+        "group": "3. Knowledge maintenance"
+      }
     }
   ]
 }
