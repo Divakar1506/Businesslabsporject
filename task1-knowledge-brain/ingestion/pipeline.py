@@ -23,6 +23,11 @@ def _process_factory(store: KBStore, lastmods: dict, embed):
     async def process(url: str, html: str) -> str:
         art = parse_article(url, html, lastmods.get(url))
         old = store.article(art["article_id"])
+        if old and old.get("human_edited"):
+            # A person corrected this article: never overwrite it. Flag it if the help center changed since.
+            if art["content_hash"] != old.get("source_hash"):
+                store.mark_source_changed(art["article_id"])
+            return "unchanged"
         if old and old["content_hash"] == art["content_hash"] and old["active"]:
             return "unchanged"  # skip chunking and embedding entirely
         chunks = chunk_article(art, settings.CHUNK_MAX_TOKENS, settings.CHUNK_OVERLAP_SENTENCES)

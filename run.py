@@ -1,15 +1,21 @@
-"""One command to run everything from the VS Code terminal (Terminal > New Terminal, in this folder).
+"""Run the project from the VS Code terminal (Terminal > New Terminal, in this folder).
 
-    python run.py all            start the Knowledge Brain API + all screens + cost dashboard (Ctrl+C stops all)
-    python run.py api            Task 1 Knowledge Brain API      http://localhost:8100/docs
-    python run.py chat           Task 1 chat + expert queue      http://localhost:8501
-    python run.py inbox          Task 2 inbox review             http://localhost:8502
-    python run.py scope          Task 3 scope builder            http://localhost:8503
-    python run.py dashboard      token & cost dashboard          http://localhost:8600
+Each task on its own (Ctrl+C stops it):
+    python run.py task1          Task 1: Knowledge Brain API + chat     http://localhost:8501  (API :8100/docs)
+    python run.py task2          Task 2: Inbox Agent (+ the Task 1 API it calls)     http://localhost:8502
+    python run.py task3          Task 3: Meeting to Scope (+ the Task 1 API it calls) http://localhost:8503
+    python run.py dashboard      token & cost dashboard                  http://localhost:8600
+    python run.py api            only the Task 1 API                     http://localhost:8100/docs
+
+Tests and evaluations, per task or all:
+    python run.py test  [task1|task2|task3|shared]     offline, $0 (no name = every suite)
+    python run.py eval  [task1|task2|task3]            starts the Task 1 API if needed, $0
+
+Other:
+    python run.py all            everything at once (API + all screens + dashboard)
     python run.py ingest [--limit N]   read help-center articles (polite crawl; no limit = all, resumes)
-    python run.py test           every test suite (offline, $0)
-    python run.py eval           every evaluation (starts the API if needed, $0)
     python run.py demo-data      fill the cost dashboard with demo data
+    (older names still work: chat = task1, inbox = task2, scope = task3)
 
 Everything runs offline at $0 unless you change LLM_MODE and HARD_MONTHLY_CAP_USD in .env.
 """
@@ -106,6 +112,7 @@ def main(argv: list[str]) -> int:
         print(__doc__)
         return 0
     what, rest = argv[0], argv[1:]
+    what = {"task1": "chat", "task2": "inbox", "task3": "scope"}.get(what, what)
     if what == "all":
         if not (T1 / "data" / "kb.db").exists():
             print("No knowledge base yet: run  python run.py ingest --limit 20  first (about 1 minute).")
@@ -118,14 +125,24 @@ def main(argv: list[str]) -> int:
         return 0
     if what == "ingest":
         return run([PY, "run_ingest.py", *rest], T1)
+    folders = {"shared": ROOT, "task1": T1, "task2": T2, "task3": T3}
     if what == "test":
-        codes = [run([PY, "-m", "unittest", "discover", "-s", "tests", "-t", "."], d) for d in (ROOT, T1, T2, T3)]
+        pick = [folders[t] for t in rest if t in folders] or list(folders.values())
+        if any(t not in folders for t in rest):
+            print(f"Unknown test target. Use one of: {', '.join(folders)}")
+            return 2
+        codes = [run([PY, "-m", "unittest", "discover", "-s", "tests", "-t", "."], d) for d in pick]
         print("\nALL TESTS PASSED" if not any(codes) else "\nSOME TESTS FAILED")
         return int(any(codes))
     if what == "eval":
+        targets = {k: v for k, v in folders.items() if k != "shared"}
+        if any(t not in targets for t in rest):
+            print(f"Unknown eval target. Use one of: {', '.join(targets)}")
+            return 2
+        pick = [targets[t] for t in rest] or list(targets.values())
         procs = [] if api_up() else start(["api"])
         try:
-            codes = [run([PY, "evaluation/run_eval.py"], d) for d in (T1, T2, T3)]
+            codes = [run([PY, "evaluation/run_eval.py"], d) for d in pick]
         finally:
             for p in procs:
                 p.terminate()

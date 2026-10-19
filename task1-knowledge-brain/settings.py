@@ -35,3 +35,9 @@ TOP_K = _env("KB_TOP_K", 5)
 MIN_SCORE = _env("KB_MIN_SCORE", 0.68)
 
 API_TOKEN = os.environ.get("KB_API_TOKEN", "")  # empty = no auth (local development)
+
+# Daily refresh: while the API runs, check the sitemap once a day and update only what changed.
+DAILY_REFRESH = os.environ.get("KB_DAILY_REFRESH", "1") == "1"
+REFRESH_AT = os.environ.get("KB_REFRESH_AT", "03:00")          # local time, HH:MM
+# A run that started less than this many hours ago and never finished counts as "still running".
+RUN_STALE_HOURS = _env("KB_RUN_STALE_HOURS", 12)

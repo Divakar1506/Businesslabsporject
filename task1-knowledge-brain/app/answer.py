@@ -145,7 +145,8 @@ def _sources(hits: list[dict]) -> list[dict]:
         if cur is None or h["vector_score"] > cur["score"]:
             best[h["article_id"]] = {"title": h["title"], "url": h["url"], "section": h["heading"] or "",
                                      "score": h["vector_score"],
-                                     "kind": "expert" if h["article_id"].startswith("expert-") else "article"}
+                                     "kind": h["article_id"].split("-")[0]
+                                     if h["article_id"].startswith(("expert-", "manual-")) else "article"}
     return sorted(best.values(), key=lambda s: -s["score"])
 
 

@@ -17,7 +17,8 @@ class Source(BaseModel):
     url: str
     section: str = Field(description="Heading of the section the evidence came from ('' = intro)")
     score: float = Field(description="Cosine similarity of the best chunk from this article, 0-1")
-    kind: Literal["article", "expert"] = Field("article", description="expert = an approved human expert answer")
+    kind: Literal["article", "expert", "manual"] = Field(
+        "article", description="article = help center; expert = approved expert answer; manual = uploaded by hand")
 
 
 class ImageRef(BaseModel):
@@ -70,6 +71,19 @@ class Escalation(BaseModel):
     expires_at: str | None = None
     resolved_at: float | None = None
     article_id: str | None = None
+
+
+class ArticleEdit(BaseModel):
+    title: str = Field(min_length=3, max_length=300)
+    text: str = Field(min_length=1, max_length=200_000,
+                      description="Article text; lines starting with '## ' begin a new section")
+    editor: str = Field(min_length=1, max_length=100)
+
+
+class ReviewDecision(BaseModel):
+    reviewer: str = Field(min_length=1, max_length=100)
+    title: str | None = Field(None, max_length=300, description="Corrected title (approve only, optional)")
+    text: str | None = Field(None, max_length=200_000, description="Corrected text (approve only, optional)")
 
 
 class IngestionRunRequest(BaseModel):
