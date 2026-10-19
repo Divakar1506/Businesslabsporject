@@ -48,7 +48,8 @@ def env() -> dict:
 
 def streamlit(script: str, port: int, cwd: Path, extra: list[str] | None = None) -> list:
     return [[PY, "-m", "streamlit", "run", script, "--server.port", str(port), "--server.headless", "true",
-             "--browser.gatherUsageStats", "false"] + (["--"] + extra if extra else []), cwd]
+             "--browser.gatherUsageStats", "false", "--server.maxUploadSize", "10"]  # same 10 MB limit as the API
+            + (["--"] + extra if extra else []), cwd]
 
 
 SERVICES = {
