@@ -175,6 +175,17 @@ class KBStore:
             c.execute("UPDATE articles SET active = 0 WHERE article_id = ?", (article_id,))
             c.execute("UPDATE chunks SET active = 0 WHERE article_id = ?", (article_id,))
 
+    def replace_chunks(self, article_id: str, chunks: list[dict]) -> None:
+        """Re-index an article (e.g. after its screenshots were read) without creating a new version."""
+        with self.conn() as c:
+            active = c.execute("SELECT active FROM articles WHERE article_id = ?", (article_id,)).fetchone()
+            c.execute("DELETE FROM chunks WHERE article_id = ?", (article_id,))
+            c.executemany("""INSERT INTO chunks (chunk_id, article_id, ord, heading, text, tokens, image_refs, embedding, active)
+                             VALUES (?,?,?,?,?,?,?,?,?)""",
+                          [(ch["chunk_id"], article_id, ch["ord"], ch["heading"], ch["text"], ch["tokens"],
+                            json.dumps(ch["image_refs"]), ch.get("embedding"), active[0] if active else 1)
+                           for ch in chunks])
+
     def set_review(self, article_id: str, status: str, reviewer: str) -> None:
         with self.conn() as c:
             c.execute("UPDATE articles SET review_status = ?, reviewed_by = ?, reviewed_at = ? WHERE article_id = ?",

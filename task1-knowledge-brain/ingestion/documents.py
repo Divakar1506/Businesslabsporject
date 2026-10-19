@@ -85,19 +85,47 @@ def _docx(name: str, data: bytes) -> Extracted:
 
 # --- PDF ------------------------------------------------------------------------------
 def _pdf(name: str, data: bytes) -> Extracted:
+    text, method = "", ""
     try:
-        from pypdf import PdfReader  # optional, better quality
+        from pypdf import PdfReader  # better quality for normal PDFs
         reader = PdfReader(io.BytesIO(data))
         text = "\n".join((p.extract_text() or "").strip() for p in reader.pages).strip()
         method = f"pypdf ({len(reader.pages)} pages)"
     except ImportError:
+        pass
+    except Exception:  # damaged or unusual PDF: the basic reader below often still gets the text
+        pass
+    if not text:
         text, method = _basic_pdf_text(data), "built-in basic PDF reader"
+    if len(text) < 20:
+        scanned = _ocr_pdf_pages(data)  # scanned PDF: pages are pictures, read them with OCR
+        if scanned:
+            text, method = scanned, "OCR of scanned PDF pages (RapidOCR)"
     warn = []
     if len(text) < 20:
         warn.append("almost no text found: this may be a scanned PDF (needs OCR) or uses unusual fonts")
     elif method.startswith("built-in"):
         warn.append("read with the basic reader; installing `pypdf` gives better results for complex PDFs")
     return Extracted(name, "text", text, method, warn)
+
+
+def _ocr_pdf_pages(data: bytes, max_pages: int = 20) -> str:
+    try:
+        from pypdf import PdfReader
+        from multimodal.ocr import ocr_bytes
+        reader = PdfReader(io.BytesIO(data))
+    except Exception:
+        return ""
+    out = []
+    for page in reader.pages[:max_pages]:
+        try:
+            for img in page.images:
+                text, _ = ocr_bytes(img.data)
+                if text:
+                    out.append(text)
+        except Exception:
+            continue
+    return "\n".join(out).strip()
 
 
 def _basic_pdf_text(data: bytes) -> str:
@@ -143,9 +171,8 @@ def _image(name: str, data: bytes) -> Extracted:
     with Image.open(io.BytesIO(data)) as im:
         w, h = im.size
     try:
-        from rapidocr_onnxruntime import RapidOCR  # optional offline OCR
-        result, _ = RapidOCR()(data)
-        text = "\n".join(r[1] for r in (result or []))
+        from multimodal.ocr import ocr_bytes  # offline OCR (RapidOCR), shared with the screenshot job
+        text, _ = ocr_bytes(data)
         return Extracted(name, "image", text, f"OCR (RapidOCR) on {fmt} {w}x{h}",
                          [] if text else ["no text found in the image"])
     except ImportError:

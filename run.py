@@ -14,6 +14,7 @@ Tests and evaluations, per task or all:
 Other:
     python run.py all            everything at once (API + all screens + dashboard)
     python run.py ingest [--limit N]   read help-center articles (polite crawl; no limit = all, resumes)
+    python run.py images [--limit N]   read the text inside screenshots with offline OCR (resumable, ~7 s each)
     python run.py demo-data      fill the cost dashboard with demo data
     (older names still work: chat = task1, inbox = task2, scope = task3)
 
@@ -126,6 +127,8 @@ def main(argv: list[str]) -> int:
         return 0
     if what == "ingest":
         return run([PY, "run_ingest.py", *rest], T1)
+    if what == "images":
+        return run([PY, "run_ingest.py", "--images", *rest], T1)
     folders = {"shared": ROOT, "task1": T1, "task2": T2, "task3": T3}
     if what == "test":
         pick = [folders[t] for t in rest if t in folders] or list(folders.values())

@@ -61,6 +61,20 @@ class ExtractTests(unittest.TestCase):
             ex = extract("guide.pdf", make_pdf("Open Settings and click Payments", compress))
             self.assertIn("Open Settings and click Payments", ex.text, compress)
 
+    def test_scanned_pdf_is_read_with_ocr(self):
+        from PIL import Image, ImageDraw, ImageFont
+        try:
+            font = ImageFont.truetype("arial.ttf", 36)
+        except OSError:
+            self.skipTest("no TrueType font for drawing the test page")
+        im = Image.new("RGB", (900, 200), "white")
+        ImageDraw.Draw(im).text((30, 60), "Refund Policy for annual plans", fill="black", font=font)
+        buf = io.BytesIO()
+        im.save(buf, "PDF")
+        ex = extract("scan.pdf", buf.getvalue())
+        self.assertIn("OCR", ex.method)
+        self.assertIn("refund policy", ex.text.lower())
+
     def test_png_is_stored_as_image(self):
         ex = extract("screen.png", make_png())
         self.assertEqual(ex.kind, "image")
@@ -252,6 +266,84 @@ class ReviewAndEditTests(unittest.TestCase):
         self.assertIn("Corrected by support", art["body_text"])          # human edit kept
         self.assertEqual(art["source_changed"], 1)                       # and flagged for a person
         self.assertEqual(self.store.status()["edited_but_source_changed"], 1)
+
+
+class ScreenshotOcrTests(unittest.TestCase):
+    """The OCR job: download politely, read, store per image, re-index the article; resumable."""
+
+    def setUp(self):
+        from multimodal import ocr
+        from ingestion.parser import parse_article
+        from retrieval.chunker import chunk_article
+        from tests.test_task1 import A1, PAGES
+        self.ocr = ocr
+        self.store = KBStore(":memory:")
+        art = parse_article(A1, PAGES[A1])
+        art["images"].append({"src": "https://cdn.example.com/missing.png", "section": 1})
+        art["sections"][1]["images"].append("https://cdn.example.com/missing.png")
+        chunks = chunk_article(art)
+        for c, v in zip(chunks, fake_embed([c["text"] for c in chunks])):
+            c["embedding"] = v.tobytes()
+        self.store.save_article(art, chunks)
+        self.calls = []
+
+        def handler(req):
+            import httpx
+            self.calls.append(str(req.url))
+            return httpx.Response(404) if "missing" in str(req.url) else httpx.Response(200, content=b"img")
+        import httpx
+        self.http = httpx.Client(transport=httpx.MockTransport(handler))
+
+    def fake_ocr(self, data):
+        return "Security > Reset Password button", 1
+
+    def test_enrich_puts_text_in_the_right_section(self):
+        art = {"sections": [{"heading": "", "text": "Intro", "images": []},
+                            {"heading": "Steps", "text": "Click it.", "images": ["a.png"]}]}
+        out = self.ocr.enrich(art, {"a.png": "Save | Cancel"})
+        self.assertEqual(out["sections"][0]["text"], "Intro")
+        self.assertIn("Screenshot shows: Save | Cancel", out["sections"][1]["text"])
+        self.assertNotIn("Screenshot", art["sections"][1]["text"])          # original untouched
+
+    def test_run_reads_stores_reindexes_and_resumes(self):
+        rep = self.ocr.run(self.store, fake_embed, delay=0, http=self.http, ocr=self.fake_ocr, log=lambda m: None)
+        self.assertEqual((rep["to_read"], rep["read"], rep["failed"], rep["articles_reindexed"]), (2, 1, 1, 1))
+        texts = " ".join(c["text"] for c in self.store.active_chunks())
+        self.assertIn("Reset Password button", texts)                      # now searchable
+        self.assertEqual(self.store.article("111")["version"], 1)           # re-index is not a new version
+        self.calls.clear()
+        rep2 = self.ocr.run(self.store, fake_embed, delay=0, http=self.http, ocr=self.fake_ocr, log=lambda m: None)
+        self.assertEqual((rep2["to_read"], self.calls), (0, []))            # resumable: nothing read twice
+        self.assertEqual(self.ocr.status(self.store)["read"], {"ok": 1, "failed": 1})
+
+    def test_crawl_reuses_text_already_read(self):
+        import asyncio
+        from ingestion import pipeline
+        from tests.test_task1 import A1, PAGES, SimSite, page, sitemap
+        self.ocr.run(self.store, fake_embed, delay=0, http=self.http, ocr=self.fake_ocr, log=lambda m: None)
+        site = SimSite({A1: PAGES[A1].replace("Members can reset", "Users can reset")})
+
+        async def go():
+            async with site.client() as c:
+                return await pipeline.run(self.store, None, sitemap_xml=sitemap((A1, "2")), client=c, embed=fake_embed)
+        asyncio.run(go())
+        self.assertIn("Reset Password button", " ".join(c["text"] for c in self.store.active_chunks()))
+
+    def test_icons_are_skipped(self):
+        self.assertEqual(self.ocr.ocr_bytes(make_png()), ("", -1))           # 40x20 icon
+
+    def test_real_ocr_reads_text_in_an_image(self):
+        from PIL import Image, ImageDraw, ImageFont
+        try:
+            font = ImageFont.truetype("arial.ttf", 40)
+        except OSError:
+            font = ImageFont.load_default()
+        im = Image.new("RGB", (700, 160), "white")
+        ImageDraw.Draw(im).text((20, 50), "Payment Settings", fill="black", font=font)
+        buf = io.BytesIO()
+        im.save(buf, "PNG")
+        text, lines = self.ocr.ocr_bytes(buf.getvalue())
+        self.assertIn("payment", text.lower())
 
 
 class DailyRefreshTests(unittest.TestCase):

@@ -227,6 +227,14 @@ async def run_ingestion(limit: int | None = None) -> dict:
         report = await pipeline.run(store, limit)
         brain().escalations.expire()
         brain().reload()
+        try:  # then read the text in any new screenshots (normally only a few a day)
+            from multimodal import ocr
+            report["screenshots"] = await asyncio.to_thread(
+                ocr.run, store, brain().embedder.encode, None, 0.5, settings.USER_AGENT, None, ocr.ocr_bytes,
+                lambda _m: None)
+            brain().reload()
+        except ImportError:
+            report["screenshots"] = "OCR not installed (pip install rapidocr-onnxruntime)"
         return report
 
 
@@ -256,7 +264,9 @@ async def daily_refresh_loop():
 
 @app.get("/ingestion/status", dependencies=[Depends(auth)])
 def ingestion_status():
-    return {**store.status(), "running": _ingest_lock.locked() or other_run_in_progress(),
+    from multimodal import ocr
+    return {**store.status(), "screenshots": ocr.status(store),
+            "running": _ingest_lock.locked() or other_run_in_progress(),
             "daily_refresh": {"enabled": settings.DAILY_REFRESH, "at": settings.REFRESH_AT, **_schedule}}
 
 

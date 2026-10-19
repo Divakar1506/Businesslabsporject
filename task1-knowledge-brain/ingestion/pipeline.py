@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import httpx
 
 import settings
+from multimodal import ocr
 from retrieval import embedder
 from retrieval.chunker import chunk_article, embed_text
 
@@ -30,7 +31,10 @@ def _process_factory(store: KBStore, lastmods: dict, embed):
             return "unchanged"
         if old and old["content_hash"] == art["content_hash"] and old["active"]:
             return "unchanged"  # skip chunking and embedding entirely
-        chunks = chunk_article(art, settings.CHUNK_MAX_TOKENS, settings.CHUNK_OVERLAP_SENTENCES)
+        # screenshots already read by the OCR job are indexed with their section (new ones: `run.py images`)
+        srcs = [src for s in art["sections"] for src in s.get("images", [])]
+        indexed = ocr.enrich(art, ocr.lookup(store, srcs))
+        chunks = chunk_article(indexed, settings.CHUNK_MAX_TOKENS, settings.CHUNK_OVERLAP_SENTENCES)
         texts = [embed_text(art["title"], c["heading"], c["text"]) for c in chunks]
         vecs = await asyncio.to_thread(embed, texts)  # keep the event loop free for other fetches
         for c, v in zip(chunks, vecs):
@@ -42,6 +46,7 @@ def _process_factory(store: KBStore, lastmods: dict, embed):
 async def run(store: KBStore, limit: int | None = None, sitemap_xml: str | None = None,
               client: httpx.AsyncClient | None = None, embed=None) -> dict:
     """Returns a report: sitemap diff + crawl outcome counts."""
+    ocr.ensure_schema(store)
     run_id = store.start_run()
     host = urlparse(settings.SITEMAP_URL).netloc
     base = f"https://{host}"

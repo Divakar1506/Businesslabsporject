@@ -17,6 +17,7 @@ from pathlib import Path
 import settings
 from ingestion.documents import Extracted, extract, safe_name
 from ingestion.store import KBStore
+from multimodal import ocr
 from retrieval import embedder
 from retrieval.chunker import chunk_article, embed_text
 from shared import guardrails
@@ -90,6 +91,10 @@ class ManualKnowledge:
                            "warnings": r.warnings} for r in reports]}
 
     def _index(self, art: dict) -> list[dict]:
+        # help-center screenshots already read by OCR stay searchable after a human edit
+        ocr.ensure_schema(self.store)
+        srcs = [src for s in art["sections"] for src in s.get("images", []) if src.startswith("http")]
+        art = ocr.enrich(art, ocr.lookup(self.store, srcs))
         chunks = chunk_article(art, settings.CHUNK_MAX_TOKENS, settings.CHUNK_OVERLAP_SENTENCES)
         for ch, v in zip(chunks, self._embed([embed_text(art["title"], ch["heading"], ch["text"]) for ch in chunks])):
             ch["embedding"] = v.tobytes()
