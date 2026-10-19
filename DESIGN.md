@@ -68,9 +68,11 @@ flowchart LR
 | **Parser that reads only the article body** | Menus and footers would pollute search. Each screenshot keeps its section and the sentence before and after it. |
 | **Chunks split at headings, sized with spaCy** | A payment section and a refund section never share a chunk. The free blank spaCy model counts tokens; there is no download. |
 | **Local embeddings (bge-small in NumPy)** | $0 and private. The model was already on this computer, and PyTorch is not needed. |
-| **Hybrid search** | Measured on 26 questions: vector search ranks the right article first more often (96%), but only hybrid always has it in the top 5 (100%), which is what citations need. |
+| **Search chosen by measurement** | On 208 articles hybrid search won (100% top-5). On the full 1,539 articles it dropped to 92%, because the keyword half adds noise, while vector search reached 100% on dev. Six setups were compared on dev only, and vector was chosen. |
 | **"I don't know" threshold (0.68)** | Chosen on 16 dev questions and checked on 16 held-out ones (16/16). An unanswerable question becomes an **expert task** instead of a guess. |
 | **Expert answers flow back** | *General* answers become versioned, searchable articles. *Customer-specific* ones are kept on record only, so one customer's case never becomes a product fact. Expiry dates retire stale answers. |
+| **People add and correct knowledge, with review** | A company's knowledge isn't only on its website. A form plus JPG, PNG, PDF and Word uploads become an article that **waits for a human to approve it**. Any article can be **edited or deleted**, with old versions kept. The crawler **never overwrites a human edit**; it flags the article when the help center changes. |
+| **Screenshot text is searchable (offline OCR)** | Answers often live in screenshots. Every screenshot's text is read once ($0, resumable) and indexed next to its section. A daily refresh inside the API checks the sitemap and reads only new screenshots. |
 
 ### Task 2 – Inbox Agent
 | Feature | Why |
@@ -104,20 +106,20 @@ flowchart LR
 | Dropped | Why |
 |---|---|
 | **Claude at the centre, with measured model comparisons** | The owner set the build cost at **$0** for this submission. Claude calls are paid, so the Claude path is built (gateway, prompts, schema, guardrails) but blocked by the $0 cap. This is the biggest gap against the brief, and it is stated in EVALS.md. |
-| **Screenshot understanding with a vision model** | No free local vision model is available. Screenshots are linked to their section and shown with answers, but their *content* is not searchable yet. |
+| **A vision model that *describes* screenshots** | No free local vision model is available. Instead, **offline OCR** reads the *text* in every screenshot (labels, buttons, menu names), which carries most answers. Pictures without text are still not understood. |
 | **TypeScript for Task 2** | Node.js isn't installed. The brief allows Python ("don't mix"), at the cost of the 10% bonus. |
 | **Full crawl of all 1,537 articles** | Started and resumable, but it stopped at 208. At the observed speed (CPU embeddings, about 5 articles a minute), the full read takes about 5 hours. All evals ran on 208 articles. |
-| **Reranker** | A cross-encoder is cached locally, but hybrid already reached 100% top-5. Reranking would improve position 1 and is the next experiment. |
+| **Reranker** | A cross-encoder is cached locally. On the full help center, two failures (Bitcoin, sign-up approval) are "similar but not an answer", which a reranker targets. It is the next experiment. |
 | **Real email sending and recorded meetings** | Sending is simulated (an outbox table). The four meetings are role-play scripts, not recordings. |
 
 ## 5. Model choices
 
 | Job | Choice | Evidence |
 |---|---|---|
-| Embeddings | `bge-small-en-v1.5`, local | 96% first-rank / 100% top-5 in hybrid, $0 |
+| Embeddings | `bge-small-en-v1.5`, local | Full help center: 100% top-5 on dev, 92% on test (vector search), $0 |
 | Tokens | spaCy blank English × 1.3 | Free. The dashboard compares the estimate with real usage so the ratio can be recalibrated. |
 | Email category | Rules + Naive Bayes | Leave-one-out on dev: 10/36 → 35/36. Test: 20/20. |
-| Answers / drafts / extraction | Extractive answers, templates and rules (offline); Ollama or Claude through the same gateway | Offline: 31/32 (Task 1), 53/56 (Task 2), 30/34 (Task 3) at $0 |
+| Answers / drafts / extraction | Extractive answers, templates and rules (offline); Ollama or Claude through the same gateway | Offline, full help center: 30/32 (Task 1), 50/56 (Task 2), 30/34 (Task 3) at $0 |
 | Paid model default | `claude-opus-5-5`, with a "cost-optimized" preset (Haiku for knowledge and inbox, Sonnet for scope) | **Not measured.** It needs 20–30 paid evals per decision, which are blocked by the $0 cap. |
 
 ## 6. What breaks (known failures)
@@ -133,5 +135,5 @@ flowchart LR
 1. Finish the full crawl, then re-calibrate both thresholds on a larger labelled set.
 2. Turn on the model path (local Ollama first, then Claude with a small cap) and run the same 122 eval cases for a real **quality / cost / speed** comparison of at least two models.
 3. Add a reranker and an "is this evidence actually an answer?" check to fix the Bitcoin-type failure.
-4. Use a vision model for screenshot descriptions, stored next to each image.
+4. Add an eval set of screenshot-only questions once the OCR job finishes, and a vision model for pictures without text.
 5. Add TypeScript for Task 2 if Node.js becomes available.

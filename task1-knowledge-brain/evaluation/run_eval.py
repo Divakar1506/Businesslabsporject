@@ -60,27 +60,40 @@ def main():
     for c in cases:
         (valid if all(e in active for e in c["expect"][:1]) or not c["expect"] else invalid).append(c)
 
-    # 1. retrieval comparison
-    retrieval = {m: {"hit1": 0, "hit5": 0, "rr": []} for m in MODES}
-    per_case = []
+    # 1. retrieval comparison: 6 configurations, measured separately on dev and test
+    configs = [(m, d) for m in MODES for d in (False, True)]
+    name = lambda m, d: f"{m}{' + distinct articles' if d else ''}"  # noqa: E731
+    stats = {(cfg, sp): {"hit1": 0, "hit5": 0, "rr": []} for cfg in configs for sp in ("dev", "test")}
+    hits_by = {}
     for c in valid:
         qvec = brain.embedder.encode_query(c["question"])
-        row = {"id": c["id"], "split": c["split"], "type": c["type"]}
-        for m in MODES:
-            hits = brain.index.search(c["question"], qvec, k=5, mode=m)
-            if m == "hybrid":
-                row["best"] = max((h["vector_score"] for h in hits), default=0.0)
-                row["rank"] = rank_of(hits, c["expect"]) if c["expect"] else None
+        for cfg in configs:
+            hits = brain.index.search(c["question"], qvec, k=5, mode=cfg[0], distinct=cfg[1])
+            hits_by[(c["id"], cfg)] = hits
             if c["expect"]:
                 r = rank_of(hits, c["expect"])
-                retrieval[m]["hit1"] += r == 1
-                retrieval[m]["hit5"] += r is not None
-                retrieval[m]["rr"].append(1 / r if r else 0.0)
-                row[f"rank_{m}"] = r
-        per_case.append(row)
-    n_ans = sum(1 for c in valid if c["expect"])
-    retrieval_summary = {m: {"hit@1": round(v["hit1"] / n_ans, 3), "hit@5": round(v["hit5"] / n_ans, 3),
-                             "MRR": round(statistics.mean(v["rr"]), 3)} for m, v in retrieval.items()}
+                st = stats[(cfg, c["split"])]
+                st["hit1"] += r == 1
+                st["hit5"] += r is not None
+                st["rr"].append(1 / r if r else 0.0)
+
+    def summary_of(cfg, sp):
+        st = stats[(cfg, sp)]
+        n = len(st["rr"]) or 1
+        return {"hit@1": round(st["hit1"] / n, 3), "hit@5": round(st["hit5"] / n, 3),
+                "MRR": round(statistics.mean(st["rr"]) if st["rr"] else 0, 3)}
+
+    retrieval_summary = {name(*cfg): {"dev": summary_of(cfg, "dev"), "test": summary_of(cfg, "test")} for cfg in configs}
+    # choose on DEV only: best hit@5, then best MRR, then the simpler configuration
+    best_cfg = max(configs, key=lambda cfg: (summary_of(cfg, "dev")["hit@5"], summary_of(cfg, "dev")["MRR"],
+                                             -configs.index(cfg)))
+    settings.SEARCH_MODE, settings.DISTINCT_ARTICLES = best_cfg
+    per_case = []
+    for c in valid:
+        hits = hits_by[(c["id"], best_cfg)]
+        per_case.append({"id": c["id"], "split": c["split"], "type": c["type"],
+                         "best": max((h["vector_score"] for h in hits), default=0.0),
+                         "rank": rank_of(hits, c["expect"]) if c["expect"] else None})
 
     # 2. threshold calibration on dev, reported on test
     dev = [r for r in per_case if r["split"] == "dev"]
@@ -134,6 +147,7 @@ def main():
         "corpus": {"active_articles": len(active), "cases": len(cases), "valid_cases": len(valid),
                    "invalid_cases": [c["id"] for c in invalid]},
         "retrieval": retrieval_summary,
+        "search_config_chosen_on_dev": name(*best_cfg),
         "calibration": calibration,
         "end_to_end": {"passed": f"{sum(r['passed'] for r in results)}/{len(results)}", "by_split": by_split,
                        "p50_latency_ms": round(statistics.median(lat), 1),

@@ -55,7 +55,8 @@ class Brain:
         t0 = time.perf_counter()
         rid = uuid.uuid4().hex[:16]
         flags = [f"question looks like a prompt injection: {s!r}" for s in guardrails.injection_signals(question)]
-        raw = self.index.search(question, self.embedder.encode_query(question), k=top_k)
+        raw = self.index.search(question, self.embedder.encode_query(question), k=top_k,
+                                mode=settings.SEARCH_MODE, distinct=settings.DISTINCT_ARTICLES)
         # Retrieved text is data. A chunk that tries to give instructions is dropped from the evidence.
         hits = []
         for h in raw:

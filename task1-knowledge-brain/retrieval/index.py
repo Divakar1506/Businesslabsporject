@@ -78,8 +78,21 @@ class HybridIndex:
                 scores[i] += idf * tf * (BM25_K1 + 1) / norm
         return scores
 
-    def search(self, query: str, qvec: np.ndarray | None, k: int = 5, mode: str = "hybrid", pool: int = 30) -> list[dict]:
-        """Return the top-k chunks with their vector, BM25 and fused scores."""
+    def search(self, query: str, qvec: np.ndarray | None, k: int = 5, mode: str = "hybrid", pool: int = 30,
+               distinct: bool = False) -> list[dict]:
+        """Return the top-k chunks with their vector, BM25 and fused scores.
+
+        distinct=True keeps only the best chunk of each article, so k results are k different articles.
+        """
+        if distinct:
+            seen, out = set(), []
+            for h in self.search(query, qvec, k=pool, mode=mode, pool=pool):
+                if h["article_id"] not in seen:
+                    seen.add(h["article_id"])
+                    out.append(h)
+                if len(out) == k:
+                    break
+            return out
         if not self.chunks:
             return []
         vs = self.vector_scores(qvec) if qvec is not None else np.zeros(len(self.chunks), dtype=np.float32)

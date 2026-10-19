@@ -1,5 +1,5 @@
 {
-  "run_at": "2026-10-18 16:37:35",
+  "run_at": "2026-10-19 14:06:46",
   "cases": 34,
   "passed": "30/34",
   "by_split": {
@@ -8,10 +8,10 @@
     "all-meetings checks": "3/3"
   },
   "latency_ms_per_meeting": {
-    "meeting_a": 3753.0,
-    "meeting_b": 850.6,
-    "meeting_d": 369.1,
-    "meeting_c": 392.0
+    "meeting_a": 19398.6,
+    "meeting_b": 7393.1,
+    "meeting_d": 2599.3,
+    "meeting_c": 3010.6
   },
   "cost_usd": 0.0,
   "estimates_likely_hours": {

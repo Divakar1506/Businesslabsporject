@@ -5,48 +5,52 @@ Cost column: every run so far used offline mode, so the model cost is **$0**.
 
 ## Task 1 — Knowledge Brain
 
-**Run:** `python task1-knowledge-brain/evaluation/run_eval.py` · 2026-10-15 23:37 · 208 help-center articles ingested (of 1,537; full crawl in progress)
-**Cases:** 32 in `evaluation/cases.jsonl`: 24 answerable, 2 prompt-injection, 6 not in the help center. Split into 16 **dev** (used to pick the threshold) and 16 **test** (held out, only used to report).
-**Raw results:** `evaluation/results.csv`, `evaluation/summary.json`.
+**Cases:** 32 in `evaluation/cases.jsonl`: 24 answerable, 2 prompt-injection, 6 not in the help center. Split into 16 **dev** (used for every choice) and 16 **test** (held out, only used to report).
+**Runs:** `python run.py eval task1`. First run 2026-10-15 on **208** articles; re-run 2026-10-19 on the **full help center (1,539 articles)**. Raw results: `evaluation/results.csv`, `evaluation/summary.json`.
 
-### Retrieval: which search finds the right article? (24 + 2 cases with a known answer)
-
-| Method | Right article ranked 1st | Right article in top 5 | MRR |
+### What changed when the knowledge base grew 7 times
+| | 208 articles | 1,539 articles (before any change) | 1,539 articles, after re-choosing on dev |
 |---|---|---|---|
-| Vector only (local bge-small) | **96%** | 96% | **0.96** |
-| Keyword only (BM25, spaCy tokens) | 77% | 88% | 0.82 |
-| Hybrid (RRF of both) | 85% | **100%** | 0.91 |
+| Search used | hybrid | hybrid | **vector** |
+| Right article in top 5 (dev / test) | 100% (all) | 92% / 92% | **100% / 92%** |
+| End to end passed | 31 / 32 | 28 / 32 | **30 / 32** (dev 15/16, test 15/16) |
 
-**Choice:** hybrid. Answers cite the top 5 results, and hybrid is the only method that never missed the right article there. Vector-only ranks better at position 1, so a reranker on top of hybrid is the next thing to test.
+**Why it dropped:** with more articles, more near-duplicates compete. Of the 4 new failures, 2 were not wrong. "Translate my website" and "Sign in with Facebook" were answered from newer, equally correct articles ("Google Website Translator", "Using Facebook Login"). Their labels were **widened, and this is recorded in the case file** (`label_note`). The other 2 were real.
 
-### "I don't know" threshold (abstain below this match score)
+### Search configuration, compared on the full help center (choice made on dev only)
+| Configuration | Dev: in top 5 / MRR | Test: in top 5 / MRR |
+|---|---|---|
+| **Vector (local bge-small)** ← chosen | **100% / 0.92** | **92% / 0.89** |
+| Vector + one chunk per article | 100% / 0.92 | 92% / 0.89 |
+| Hybrid (vector + BM25, RRF) | 92% / 0.79 | 92% / 0.77 |
+| Hybrid + one chunk per article | 92% / 0.79 | 92% / 0.77 |
+| Keyword only (BM25, spaCy tokens) | 69% / 0.53 | 85% / 0.73 |
 
-| | Value |
-|---|---|
-| Best dev range | 0.66 – 0.69 (dev accuracy 94%) |
-| Chosen | **0.68** (middle of that range) |
-| Held-out test accuracy at 0.68 | **100% (16/16)** |
+On 208 articles hybrid had won (100% top-5). On the full help center, the keyword half adds noise ("cancel" matches billing pages), so plain vector search is better. "One chunk per article" made no difference, so it stays off.
 
-### End to end (question → answer or escalation)
+### "I don't know" threshold
+Re-checked on the full help center: the best dev range is 0.66 – 0.70, and the middle is **0.68 again** (dev 94%, held-out test 94%). The setting did not need to change.
 
+### End to end on the full help center
 | Measure | Result |
 |---|---|
-| Passed | **31 / 32** (dev 15/16, test 16/16) |
+| Passed | **30 / 32** (dev 15/16, test 15/16) |
 | Prompt injections flagged and still answered correctly | 2 / 2 |
 | Off-topic questions sent to a human instead of answered | 5 / 6 |
-| Latency p50 / p95 | 125 ms / 312 ms (CPU, offline) |
+| Latency p50 / p95 | 127 ms / 3.0 s (p95 includes the first query loading the larger index) |
 | Cost per answer | $0 (offline extractive answers) |
 
-### Failure we keep (honest)
+### Failures we keep (honest)
+- **KB-031, "Can I pay my invoice with Bitcoin?"** is answered instead of escalated, from a spam-keyword list that contains "bitcoin" (score 0.73). A similar word is not an answer.
+- **KB-008, "Can I review new member sign-ups before they go live?"** The right article ("Manually Approve New Member Signups") is not in the top 5. Articles about *review* approval and *sign-up* settings outrank it. This new failure appeared with the full help center.
+- *Next fix to test for both:* a reranker or relevance check that asks "does this evidence answer the question?", not just "is it similar?".
 
-**KB-031, "Can I pay my invoice with Bitcoin?"** gets answered instead of escalated. The Spam Form Protector article contains a list of spam keywords that includes "bitcoin", which gives a match score of 0.73. A high similarity score is not the same as an answer.
-*Next fix to test:* a relevance check that the evidence actually answers the question (a reranker or an LLM judge), not just mentions the words.
+### Screenshots (OCR)
+Text inside screenshots is now read with offline OCR (`python run.py images`). On real help-center screenshots it reads interface labels such as "Post Type Copied", "Edit Post Types" and "Search by Keyword", at about 7 s per screenshot on CPU. **6,150 screenshots** are being read in the background, and the evals above were run **before** most of them were added. A screenshot-only eval set is **pending** until the job finishes.
 
 ### Limits of this eval
 - 32 cases is small: one case is about 3 percentage points.
-- The corpus is still growing while the full crawl runs, so scores will shift. **Re-run and re-calibrate after the full crawl.**
-- Answers are extractive (offline, $0). Claude-written answers and the comparison of two models are **pending**: they need paid calls, which are blocked by the $0 cap.
-- Screenshot-only answers can't be tested yet: image descriptions need a vision model (not free locally). This is **pending**.
+- Answers are extractive (offline, $0). Claude-written answers and a comparison of two models are **pending**: they need paid calls, which the $0 cap blocks.
 - Two chunking strategies have not been compared yet (**pending**).
 
 ## Task 2 — Inbox Agent
@@ -54,6 +58,8 @@ Cost column: every run so far used offline mode, so the model cost is **$0**.
 **Run:** `python task2-inbox-agent/evaluation/run_eval.py` against the live Task 1 API · 2026-10-16 08:44 · offline mode, $0
 **Data:** 56 realistic customer emails written for this project (`data/emails.jsonl`), covering 7 categories. 36 are **dev** (the classifier trains only on these) and 20 are **test** (held out). Each email is labelled with category, urgency, risk, expected behaviour, key facts and the help-center article that should be cited.
 **Raw results:** `evaluation/results.csv`, `evaluation/summary.json`.
+
+**Re-run 2026-10-19 on the full help center (1,539 articles, vector search): 50 / 56** (was 53 / 56 on 208 articles). Two labels were widened to newer, equally correct articles (E010, E011). Three new failures are real: **E005** "Approve members first" is answered with the *review* approval article (the same confusion as Task 1 KB-008); **E024** misses the review-approval setting; **E013** "Salesforce sync" is now answered from a Zapier article at score 0.694, just over the 0.68 cut-off, instead of going to an expert. Still **56 / 56 with no unauthorised promises**, and held-out category **20 / 20**. The table below is the first run, on 208 articles.
 
 | Check | Result |
 |---|---|
@@ -96,6 +102,8 @@ An earlier version scored 16/20 on test. Its four test misses were not used to c
 
 Labels and reference hours are in `evaluation/expected.json`. The reference hour ranges are the author's own senior-developer estimates, not a second reviewer's.
 **Raw results:** `evaluation/results.csv`, `evaluation/summary.json`.
+
+**Re-run 2026-10-19 on the full help center: unchanged at 30 / 34**, with the same feasibility classes and the same estimates (27 / 69.9 / 35.8 h).
 
 | Group | Passed |
 |---|---|
