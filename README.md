@@ -5,7 +5,9 @@ More detail: [DESIGN.md](DESIGN.md) · [EVALS.md](EVALS.md) · [AI_LOG.md](AI_LO
 
 ## Run it (VS Code terminal, one command)
 Python 3.11+ with `fastapi uvicorn httpx pydantic streamlit altair pandas numpy tokenizers spacy`. Copy `.env.example` to `.env` (works as is).
+Open **this** folder first (VS Code: File → Open Folder), or `cd` into it. Running `run.py` from another folder fails with "can't open file run.py".
 ```
+cd "C:\Users\ZARA\OneDrive\Desktop\Business Labs Projects\ai-tech-consultant"
 python run.py ingest --limit 20     # first time only: read 20 help-center articles (~1 min, polite)
 python run.py all                   # API + all screens + cost dashboard. Ctrl+C stops everything
 python run.py test                  # all 76 tests, $0
