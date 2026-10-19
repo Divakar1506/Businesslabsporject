@@ -131,11 +131,11 @@ class Brain:
                         scored.append((-overlap, ci, si, sent.lstrip("- ").strip(), ci + 1))
         if not scored:
             first = hits[0]["text"].split("\n")[0]
-            return f"From the help center: {first} [1]"
+            return f"From our knowledge base: {first} [1]"
         scored.sort()
         picked = sorted(scored[:n], key=lambda x: (x[1], x[2]))
         lines = [f"- {s} [{cite}]" for _, _, _, s, cite in picked]
-        return "From the help center:\n" + "\n".join(lines)
+        return "From our knowledge base:\n" + "\n".join(lines)
 
 
 def _sources(hits: list[dict]) -> list[dict]:
