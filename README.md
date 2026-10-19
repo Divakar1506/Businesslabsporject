@@ -1,7 +1,7 @@
 # AI Tech Consultant (Business Labs Projects)
 
 One shared **Knowledge Brain** (Task 1) answers product questions from the Brilliant Directories help center with sources. It is used **only through its API** by an **Inbox Agent** (Task 2) that drafts customer replies, and by **Meeting to Scope** (Task 3) that turns client meetings into a scope, an estimate and a proposal. Everything runs **offline at $0** by default.
-More detail: [DESIGN.md](DESIGN.md) · [EVALS.md](EVALS.md) · [AI_LOG.md](AI_LOG.md) · [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [TODO.md](TODO.md)
+More detail: [DESIGN.md](DESIGN.md) · [EVALS.md](EVALS.md) · [AI_LOG.md](AI_LOG.md) · [DEMO_VIDEO.md](DEMO_VIDEO.md) (demo script) · [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) · [TODO.md](TODO.md)
 
 ## Run it (VS Code terminal)
 Python 3.11+ with `fastapi uvicorn python-multipart httpx pydantic streamlit altair pandas numpy pillow tokenizers spacy`. Copy `.env.example` to `.env` (works as is).
@@ -73,7 +73,7 @@ Status: ✅ done · 🟡 partly done · ❌ not done. Every number comes from [E
 | Retries, human approval, safe bad input | ✅ | Retries with backoff, approval gates, input checks and guardrails |
 | One folder per task; one command; commits over 4 days | ✅ / 🟡 | `run.py all`. Commits on 15, 16 and 18 Oct |
 | README, DESIGN, EVALS, AI_LOG | ✅ (AI_LOG is a draft for the author to review) | |
-| Demo video | ❌ | To be recorded by the author |
+| Demo video | ❌ (script ready) | Timed script in [DEMO_VIDEO.md](DEMO_VIDEO.md); to be recorded by the author |
 | One AI coding tool, full chat history | ✅ | Claude Code, one conversation |
 
 ### Additional work not asked for in the brief
